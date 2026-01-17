@@ -65,15 +65,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-12 max-w-2xl">
-      {/* Header */}
-      <div className="border-b pb-6">
-        <h1>Profile</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your personal information and contact details.
-        </p>
-      </div>
-
+    <div className="space-y-8 max-w-2xl">
       {/* Profile Form */}
       <section>
         <div className="simple-card">
@@ -91,7 +83,7 @@ export default function ProfilePage() {
                 value={formData.full_name}
                 onChange={handleChange}
                 placeholder="John Doe"
-                className="bg-secondary border-border"
+                className="bg-card border-border text-foreground"
               />
             </div>
 
@@ -116,7 +108,7 @@ export default function ProfilePage() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="+1 (555) 123-4567"
-                className="bg-secondary border-border"
+                className="bg-card border-border text-foreground"
               />
             </div>
 
@@ -128,7 +120,7 @@ export default function ProfilePage() {
                 value={formData.location}
                 onChange={handleChange}
                 placeholder="San Francisco, CA"
-                className="bg-secondary border-border"
+                className="bg-card border-border text-foreground"
               />
             </div>
 
@@ -145,7 +137,7 @@ export default function ProfilePage() {
                     value={formData.linkedin_url}
                     onChange={handleChange}
                     placeholder="https://linkedin.com/in/johndoe"
-                    className="bg-secondary border-border"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
 
@@ -158,7 +150,7 @@ export default function ProfilePage() {
                     value={formData.github_url}
                     onChange={handleChange}
                     placeholder="https://github.com/johndoe"
-                    className="bg-secondary border-border"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
 
@@ -171,7 +163,7 @@ export default function ProfilePage() {
                     value={formData.portfolio_url}
                     onChange={handleChange}
                     placeholder="https://johndoe.com"
-                    className="bg-secondary border-border"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
               </div>

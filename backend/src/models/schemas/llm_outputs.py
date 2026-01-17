@@ -225,7 +225,7 @@ class ExtractedPublication(BaseModel):
     authors: list[str] = Field(default_factory=list, description="List of authors")
     publication_type: Literal[
         "journal", "conference", "book", "book_chapter",
-        "thesis", "patent", "preprint", "other"
+        "thesis", "patent", "preprint", "poster", "manuscript", "other"
     ] = "other"
     venue: str | None = Field(None, description="Journal, conference, or publisher name")
     publication_date: str | None = Field(None, description="Publication date in YYYY-MM or YYYY format")

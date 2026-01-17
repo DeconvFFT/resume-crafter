@@ -291,15 +291,8 @@ export default function ProjectsPage() {
 
   return (
     <div className="space-y-12">
-      {/* Header */}
-      <div className="border-b pb-6 flex items-center justify-between">
-        <div>
-          <h1>Projects</h1>
-          <p className="text-muted-foreground mt-2">
-            Add your projects to showcase in tailored resumes.
-          </p>
-        </div>
-
+      {/* Actions */}
+      <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="btn-primary">
@@ -325,7 +318,7 @@ export default function ProjectsPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., E-commerce Platform, Portfolio Website"
                   required
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
@@ -337,7 +330,7 @@ export default function ProjectsPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief description of the project and its purpose"
                   rows={2}
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
@@ -348,7 +341,7 @@ export default function ProjectsPage() {
                   value={technologies}
                   onChange={(e) => setTechnologies(e.target.value)}
                   placeholder="e.g., React, Node.js, PostgreSQL, AWS"
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
@@ -363,7 +356,7 @@ export default function ProjectsPage() {
                   value={githubRepoUrl}
                   onChange={(e) => setGithubRepoUrl(e.target.value)}
                   placeholder="https://github.com/username/repository"
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
                 <p className="text-xs text-muted-foreground">
                   If provided, we&apos;ll automatically analyze your repository and generate resume-ready bullet points.
@@ -381,7 +374,7 @@ export default function ProjectsPage() {
                       value={bullet}
                       onChange={(e) => updateBullet(index, e.target.value)}
                       placeholder="e.g., Built a real-time notification system serving 10k+ users"
-                      className="bg-secondary border-border"
+                      className="bg-card border-border text-foreground"
                     />
                     {bullets.length > 1 && (
                       <Button
@@ -540,7 +533,7 @@ export default function ProjectsPage() {
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
                 placeholder="https://github.com/username/repository"
-                className="bg-secondary border-border"
+                className="bg-card border-border text-foreground"
               />
               <p className="text-xs text-muted-foreground">
                 We&apos;ll re-analyze the repository&apos;s README, languages, stars,

@@ -202,7 +202,6 @@ class Supervisor:
         try:
             logger.info("Extracting publications (direct)")
             result.publications = await self._llm.extract_publications(document_text)
-            # Debug logging for publications
             pub_count = len(result.publications.publications) if result.publications and hasattr(result.publications, 'publications') else 0
             logger.info(f"Publications extracted: {pub_count}")
         except Exception as e:

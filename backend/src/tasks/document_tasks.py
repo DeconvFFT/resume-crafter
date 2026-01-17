@@ -312,8 +312,12 @@ async def _store_supervisor_results(
     if supervisor_result.skills and supervisor_result.skills.skills:
         extracted_skills_count = len(supervisor_result.skills.skills)
         logger.info(f"Processing {extracted_skills_count} extracted skills")
+        # Only check non-deleted skills for deduplication
         existing_result = await db.execute(
-            select(Skill.name).where(Skill.user_id == user_id)
+            select(Skill.name).where(
+                Skill.user_id == user_id,
+                Skill.deleted_at.is_(None)  # Exclude soft-deleted
+            )
         )
         existing_skill_names = {name.lower() for name in existing_result.scalars().all()}
         skills_added = 0
@@ -352,8 +356,12 @@ async def _store_supervisor_results(
     # ========== Store Publications (if any) ==========
     if supervisor_result.publications and supervisor_result.publications.publications:
         extracted_pubs_count = len(supervisor_result.publications.publications)
+        # Only check non-deleted publications for deduplication
         existing_result = await db.execute(
-            select(Publication.title).where(Publication.user_id == user_id)
+            select(Publication.title).where(
+                Publication.user_id == user_id,
+                Publication.deleted_at.is_(None)  # Exclude soft-deleted
+            )
         )
         existing_titles = {title.lower() for title in existing_result.scalars().all()}
         pubs_added = 0
@@ -729,28 +737,31 @@ async def process_document(
                 await _add_processing_log(db, document, _create_log_entry(
                     "agent_pipeline", "completed",
                     f"Agent pipeline complete: {extraction_counts['experiences']} experiences, "
-                    f"{extraction_counts['projects']} projects, {extraction_counts['skills']} skills",
+                    f"{extraction_counts['projects']} projects, {extraction_counts['skills']} skills, "
+                    f"{extraction_counts['publications']} publications",
                     {
                         "experiences": extraction_counts["experiences"],
                         "projects": extraction_counts["projects"],
                         "skills": extraction_counts["skills"],
+                        "publications": extraction_counts["publications"],
                     }
                 ))
 
-                # Save checkpoint after agent pipeline (covers steps 3-5)
+                # Save checkpoint after agent pipeline (covers steps 3-6)
+                # NOTE: Supervisor extracts publications too, so we save at PUBLICATION_EXTRACTION
                 await checkpoint_manager.save_checkpoint(
-                    ProcessingStep.SKILL_EXTRACTION,
+                    ProcessingStep.PUBLICATION_EXTRACTION,
                     extra_data={"extraction_counts": extraction_counts}
                 )
                 logger.info(
                     f"Agent pipeline complete for document {document_id}: "
                     f"{extraction_counts['experiences']} experiences, "
                     f"{extraction_counts['projects']} projects, "
-                    f"{extraction_counts['skills']} skills"
+                    f"{extraction_counts['skills']} skills, "
+                    f"{extraction_counts['publications']} publications"
                 )
 
-                # Note: Skills are already extracted by the Supervisor's SkillAgent
-                # Publications will be extracted in Step 6 below (outside this if/else)
+                # Note: Supervisor extracts everything including skills and publications
 
             else:
                 # ========== LEGACY PIPELINE: Direct LLM Extraction ==========
@@ -1545,10 +1556,13 @@ async def _extract_skills(
         summary = []
         skills_added = 0
 
-        # Get existing skills for this user to avoid duplicates
+        # Get existing skills for this user to avoid duplicates (exclude soft-deleted)
         from sqlalchemy import select
         existing_result = await db.execute(
-            select(Skill.name).where(Skill.user_id == user_id)
+            select(Skill.name).where(
+                Skill.user_id == user_id,
+                Skill.deleted_at.is_(None)  # Exclude soft-deleted
+            )
         )
         existing_skill_names = {name.lower() for name in existing_result.scalars().all()}
 

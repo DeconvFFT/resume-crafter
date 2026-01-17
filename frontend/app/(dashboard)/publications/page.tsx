@@ -123,15 +123,8 @@ export default function PublicationsPage() {
 
   return (
     <div className="space-y-12">
-      {/* Header */}
-      <div className="border-b pb-6 flex items-center justify-between">
-        <div>
-          <h1>Publications</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your research papers, articles, and other publications.
-          </p>
-        </div>
-
+      {/* Actions */}
+      <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="btn-primary">
@@ -156,7 +149,7 @@ export default function PublicationsPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Deep Learning for Natural Language Processing"
                   required
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
@@ -168,7 +161,7 @@ export default function PublicationsPage() {
                   onChange={(e) => setAuthors(e.target.value)}
                   placeholder="e.g., John Smith, Jane Doe, Bob Wilson"
                   required
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
                 <p className="text-xs text-muted-foreground">
                   Comma-separated list of authors in order of contribution
@@ -182,7 +175,7 @@ export default function PublicationsPage() {
                     value={publicationType}
                     onValueChange={(v) => setPublicationType(v as PublicationType)}
                   >
-                    <SelectTrigger className="bg-secondary border-border">
+                    <SelectTrigger className="bg-card border-border text-foreground">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -202,7 +195,7 @@ export default function PublicationsPage() {
                     type="date"
                     value={publicationDate}
                     onChange={(e) => setPublicationDate(e.target.value)}
-                    className="bg-secondary border-border"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
               </div>
@@ -214,7 +207,7 @@ export default function PublicationsPage() {
                   value={venue}
                   onChange={(e) => setVenue(e.target.value)}
                   placeholder="e.g., NeurIPS 2024, Nature Machine Intelligence"
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
@@ -226,7 +219,7 @@ export default function PublicationsPage() {
                     value={doi}
                     onChange={(e) => setDoi(e.target.value)}
                     placeholder="e.g., 10.1234/example.2024"
-                    className="bg-secondary border-border"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
 
@@ -238,7 +231,7 @@ export default function PublicationsPage() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://..."
-                    className="bg-secondary border-border"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
               </div>
@@ -251,7 +244,7 @@ export default function PublicationsPage() {
                   onChange={(e) => setAbstract(e.target.value)}
                   placeholder="Brief summary of the publication..."
                   rows={3}
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
@@ -305,8 +298,8 @@ export default function PublicationsPage() {
                           pub.publication_type}
                       </span>
                       {pub.is_first_author && (
-                        <span className="text-xs px-2 py-0.5 bg-secondary rounded flex items-center gap-1">
-                          <Star className="h-3 w-3" />
+                        <span className="text-xs px-2 py-0.5 bg-accent/20 text-accent-foreground rounded flex items-center gap-1">
+                          <Star className="h-3 w-3 text-accent" />
                           First Author
                         </span>
                       )}

@@ -277,7 +277,13 @@ class LLMClient:
                 response_model=response_model,
                 max_tokens=max_tokens,
             )
-            logger.info(f"LLM request completed: {response_model.__name__}")
+            # Debug logging for extraction results
+            if hasattr(response, 'skills'):
+                logger.info(f"LLM extracted {len(response.skills)} skills: {[s.name for s in response.skills[:10]]}...")
+            elif hasattr(response, 'publications'):
+                logger.info(f"LLM extracted {len(response.publications)} publications: {[p.title[:30] for p in response.publications[:5]]}...")
+            else:
+                logger.info(f"LLM request completed: {response_model.__name__}")
             return response
         except Exception as e:
             logger.error(f"LLM completion failed: {e}")
@@ -663,34 +669,52 @@ Return structured data for each project found."""
             Extracted skills with categories and proficiency levels.
         """
 
-        system_prompt = """You are an expert at identifying technical and professional skills from documents.
+        system_prompt = """You are an expert at identifying technical and professional skills from resumes and documents.
 
-Extract ALL skills mentioned in the document, including:
-- Programming languages (Python, JavaScript, Java, etc.)
-- Frameworks and libraries (React, Django, TensorFlow, etc.)
-- Databases (PostgreSQL, MongoDB, Redis, etc.)
-- Cloud platforms (AWS, GCP, Azure)
-- DevOps tools (Docker, Kubernetes, CI/CD)
-- Other tools (Git, Jira, Figma, etc.)
-- Soft skills (Leadership, Communication, etc.)
-- Methodologies (Agile, Scrum, TDD, etc.)
+CRITICAL: You MUST extract EVERY skill from the document. Look carefully for:
 
-For each skill:
-- Categorize it appropriately
-- Estimate proficiency if context suggests it (beginner, intermediate, advanced, expert)
-- Note years of experience if mentioned
-- Include context where the skill was mentioned
+1. EXPLICIT SKILLS SECTIONS: Documents often have sections labeled "TECHNICAL SKILLS", "Skills", "Technologies", etc.
+   - Parse these sections line by line
+   - Extract EVERY technology listed (Python, R, PostgreSQL, Docker, etc.)
 
-Be thorough - extract even skills that are only mentioned once.
-Do NOT make up skills that aren't in the document."""
+2. SKILLS MENTIONED IN EXPERIENCE: Technologies and tools mentioned in job descriptions
+   - Look for patterns like "using X", "with Y", "utilizing Z"
 
-        user_prompt = f"""Extract all skills from this document:
+3. SKILLS CATEGORIES TO LOOK FOR:
+   - programming_language: Python, JavaScript, Java, R, C++, SQL, etc.
+   - framework: React, Django, TensorFlow, PyTorch, FastAPI, LangChain, etc.
+   - database: PostgreSQL, MongoDB, Redis, Snowflake, etc.
+   - cloud: AWS, GCP, Azure, SageMaker, etc.
+   - devops: Docker, Kubernetes, Jenkins, Airflow, Terraform, etc.
+   - tool: Git, Jira, Figma, OpenAI, Huggingface, etc.
+   - soft_skill: Leadership, Communication, Team Management, etc.
+   - methodology: Agile, Scrum, A/B Testing, Causal Inference, etc.
+   - other: Any other skill not fitting above categories
 
+You MUST return at least 20-50 skills from a typical resume. If you're only finding a few skills, you're missing the explicit skills section.
+
+Do NOT make up skills - only extract what's explicitly in the document."""
+
+        # Smart truncation: Keep TECHNICAL SKILLS section if it exists at end
+        doc_lower = document_text.lower()
+        skills_idx = doc_lower.find("technical skills")
+        if skills_idx < 0:
+            skills_idx = doc_lower.find("skills")
+
+        if skills_idx > 0 and skills_idx > 12000:
+            # Skills section is near the end - include it
+            truncated_text = document_text[:8000] + "\n...[TRUNCATED]...\n" + document_text[-8000:]
+        else:
+            truncated_text = document_text[:20000]
+
+        user_prompt = f"""Extract ALL skills from this resume/document. Pay special attention to any section labeled "TECHNICAL SKILLS", "Skills", or similar.
+
+DOCUMENT:
 ---
-{document_text[:15000]}
+{truncated_text}
 ---
 
-Return every skill mentioned with appropriate categorization."""
+IMPORTANT: Return EVERY skill mentioned. A typical resume has 20-50+ skills listed explicitly. Extract them ALL."""
 
         return await self._create_completion(
             response_model=SkillExtractionResult,
@@ -708,43 +732,61 @@ Return every skill mentioned with appropriate categorization."""
             Extracted publications with details.
         """
 
-        system_prompt = """You are an expert at identifying academic and professional publications from documents.
+        system_prompt = """You are an expert at identifying academic and professional publications from resumes and CVs.
 
-Extract ALL publications mentioned, including:
-- Journal articles
-- Conference papers
-- Books or book chapters
-- Theses and dissertations
+CRITICAL: Look for a "PUBLICATIONS" section in the document. Extract EVERY publication listed.
+
+Types of publications to look for:
+- Journal articles (e.g., "World Journal of Gastroenterology")
+- Conference papers (e.g., "ICICLE", "NeurIPS")
+- Posters presented at conferences
+- Manuscripts, preprints
 - Patents
-- Preprints (arXiv, etc.)
 
 For each publication, extract:
-- Full title
-- Authors (as a list)
-- Publication type
-- Venue (journal, conference, publisher)
-- Publication date (YYYY or YYYY-MM format)
-- DOI if mentioned
-- URL if available
-- Brief abstract or description if available
-- Whether the document owner is first author
+- title: The full title of the publication
+- authors: List of author names (if not listed, use empty list)
+- publication_type: journal, conference, poster, preprint, patent, book, book_chapter, thesis, other
+- venue: Journal name, conference name, or publisher
+- publication_date: Date in YYYY or YYYY-MM format
+- doi: DOI identifier if mentioned (format: 10.xxxx/xxxxx)
+- url: URL to the publication if available
+- abstract: Brief description if available
+- is_first_author: true if document owner is first author
 
-Be thorough but only extract actual publications mentioned in the document.
-Do NOT make up publications that aren't in the document."""
+IMPORTANT: Even if publications are listed briefly (just title and venue), EXTRACT THEM.
+A typical academic CV may have 2-10 publications. Extract ALL of them."""
 
-        user_prompt = f"""Extract all publications from this document:
+        # Smart truncation: Keep PUBLICATIONS section if it exists
+        doc_lower = document_text.lower()
+        pub_idx = doc_lower.find("publications")
 
+        if pub_idx > 0 and pub_idx > 12000:
+            # Publications section is near the end - include it by taking text around it
+            truncated_text = document_text[:8000] + "\n...[TRUNCATED]...\n" + document_text[-8000:]
+        else:
+            # Publications section is early or doesn't exist - use normal truncation
+            truncated_text = document_text[:20000]
+
+        user_prompt = f"""Extract ALL publications from this resume/CV. Look carefully for a "PUBLICATIONS" section.
+
+DOCUMENT:
 ---
-{document_text[:15000]}
+{truncated_text}
 ---
 
-Return every publication mentioned with full details."""
+IMPORTANT: Extract EVERY publication mentioned, even if listed briefly. Include posters, papers, articles, and manuscripts."""
 
-        return await self._create_completion(
+        result = await self._create_completion(
             response_model=PublicationExtractionResult,
             system_prompt=system_prompt,
             user_prompt=user_prompt,
         )
+
+        # Log extraction result
+        logger.debug(f"Publication extraction: {len(result.publications)} publications found")
+
+        return result
 
     async def extract_job_requirements(self, job_text: str) -> JobDescriptionExtraction:
         """Extract structured requirements from a job description.

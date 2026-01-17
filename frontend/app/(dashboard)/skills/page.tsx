@@ -119,15 +119,8 @@ export default function SkillsPage() {
 
   return (
     <div className="space-y-12">
-      {/* Header */}
-      <div className="border-b pb-6 flex items-center justify-between">
-        <div>
-          <h1>Skills</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your technical and professional skills.
-          </p>
-        </div>
-
+      {/* Actions */}
+      <div className="flex justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="btn-primary">
@@ -152,14 +145,14 @@ export default function SkillsPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., Python, AWS, Project Management"
                   required
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="category" className="text-sm">Category</Label>
                 <Select value={category} onValueChange={(v) => setCategory(v as SkillCategory)}>
-                  <SelectTrigger className="bg-secondary border-border">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -178,7 +171,7 @@ export default function SkillsPage() {
                   value={proficiency}
                   onValueChange={(v) => setProficiency(v as ProficiencyLevel)}
                 >
-                  <SelectTrigger className="bg-secondary border-border">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue placeholder="Select proficiency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,7 +194,7 @@ export default function SkillsPage() {
                   value={yearsOfExperience}
                   onChange={(e) => setYearsOfExperience(e.target.value)}
                   placeholder="e.g., 5"
-                  className="bg-secondary border-border"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
@@ -231,7 +224,7 @@ export default function SkillsPage() {
         </Dialog>
       </div>
 
-      {/* Skills List */}
+      {/* Skills by Category */}
       <section>
         {isLoading ? (
           <p className="text-muted-foreground">Loading...</p>
@@ -256,7 +249,7 @@ export default function SkillsPage() {
                   {group.skills.map((skill) => (
                     <div
                       key={skill.id}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-secondary rounded-full group"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-muted text-foreground border border-border rounded-full group hover:border-foreground transition-colors"
                     >
                       {skill.is_highlighted && (
                         <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />

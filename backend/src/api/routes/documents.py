@@ -255,6 +255,94 @@ async def verify_document(
     return document
 
 
+@router.post("/{document_id}/reprocess", response_model=DocumentResponse)
+async def reprocess_document(
+    document_id: UUID,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> Document:
+    """Reprocess a document with the latest extraction logic.
+
+    This clears the document's extracted data and re-queues it for processing.
+    Use this after updating extraction prompts or fixing bugs.
+    """
+    from datetime import datetime, timezone
+    from src.models.database import Experience, Project, Skill, Publication
+
+    # Get the document
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.user_id == current_user.id,
+            Document.deleted_at.is_(None),
+        )
+    )
+    document = result.scalar_one_or_none()
+
+    if not document:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    # Soft delete existing extracted data for this document
+    now = datetime.now(timezone.utc)
+
+    # Delete experiences from this document
+    await db.execute(
+        Experience.__table__.update()
+        .where(Experience.source_document_id == document_id)
+        .values(deleted_at=now)
+    )
+
+    # Delete projects from this document
+    await db.execute(
+        Project.__table__.update()
+        .where(Project.source_document_id == document_id)
+        .values(deleted_at=now)
+    )
+
+    # Delete skills (they don't have source_document_id, but we can clear all for user)
+    # We don't delete skills as they may come from multiple documents
+
+    # Delete publications from this document
+    await db.execute(
+        Publication.__table__.update()
+        .where(Publication.source_document_id == document_id)
+        .values(deleted_at=now)
+    )
+
+    # Reset document processing state
+    document.processing_status = TaskStatus.PENDING
+    document.processing_logs = []
+    document.checkpoint_state = None
+    document.checkpoint_step = None
+    document.checkpoint_timestamp = None
+    document.processing_attempt = 0
+
+    await db.flush()
+
+    # Create new background task
+    task = BackgroundTask(
+        user_id=current_user.id,
+        task_type="process_document",
+        entity_id=document.id,
+        status=TaskStatus.PENDING,
+        progress=0,
+    )
+    db.add(task)
+    await db.flush()
+
+    # Enqueue processing
+    try:
+        arq = await get_arq_redis()
+        await arq.enqueue_job("process_document", document.id, current_user.id)
+        await arq.close()
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to enqueue document reprocessing: {e}")
+
+    await db.refresh(document)
+    return document
+
+
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: UUID,
