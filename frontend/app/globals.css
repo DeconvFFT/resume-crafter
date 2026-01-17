@@ -1,0 +1,873 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Editorial / Magazine Theme - Light Mode */
+    --background: 40 33% 97%;          /* #FAF8F5 - Warm Ivory */
+    --foreground: 30 10% 9%;           /* #1A1815 - Ink Black */
+
+    --card: 38 36% 93%;                /* #F5F0E8 - Antique Linen */
+    --card-foreground: 30 10% 9%;
+
+    --popover: 38 36% 93%;
+    --popover-foreground: 30 10% 9%;
+
+    /* Terracotta Red - Primary Actions */
+    --primary: 12 61% 49%;             /* #C84B31 */
+    --primary-foreground: 40 33% 97%;
+
+    --secondary: 30 10% 9%;            /* Ink Black for secondary buttons */
+    --secondary-foreground: 40 33% 97%;
+
+    --muted: 38 20% 90%;               /* Slightly darker ivory */
+    --muted-foreground: 30 6% 40%;     /* #6B6660 - Darker Stone (4.5:1 contrast) */
+
+    --accent: 42 48% 59%;              /* #C9A962 - Champagne Gold */
+    --accent-foreground: 30 10% 9%;
+
+    --destructive: 345 55% 35%;        /* #8B2942 - Burgundy */
+    --destructive-foreground: 40 33% 97%;
+
+    --border: 38 20% 88%;              /* #E8E3DB - Warm border */
+    --input: 38 20% 88%;
+    --ring: 12 61% 49%;                /* Terracotta focus ring */
+
+    /* Semantic Colors */
+    --success: 120 20% 30%;            /* #3D5A3D - Forest Green */
+    --success-foreground: 40 33% 97%;
+    --warning: 42 85% 38%;             /* #B8860B - Amber Ochre */
+    --warning-foreground: 30 10% 9%;
+    --info: 220 13% 35%;               /* #4A5568 - Slate Blue */
+    --info-foreground: 40 33% 97%;
+
+    /* Typography Colors */
+    --text-primary: 30 10% 9%;         /* #1A1815 - Ink */
+    --text-secondary: 30 6% 27%;       /* #4A4641 - Charcoal */
+    --text-muted: 30 6% 40%;           /* #6B6660 - Darker Stone (4.5:1 contrast) */
+
+    /* Editorial radius - sharp corners */
+    --radius: 0px;
+  }
+
+  .dark {
+    /* Dark Mode Variant */
+    --background: 30 10% 9%;           /* #1C1A17 */
+    --foreground: 38 36% 93%;          /* #F5F0E8 */
+
+    --card: 30 8% 12%;                 /* #252320 */
+    --card-foreground: 38 36% 93%;
+
+    --popover: 30 8% 12%;
+    --popover-foreground: 38 36% 93%;
+
+    --primary: 12 70% 55%;             /* #E05A3E - Brighter terracotta */
+    --primary-foreground: 30 10% 9%;
+
+    --secondary: 38 36% 93%;
+    --secondary-foreground: 30 10% 9%;
+
+    --muted: 30 6% 18%;
+    --muted-foreground: 30 10% 65%;
+
+    --accent: 42 48% 59%;
+    --accent-foreground: 30 10% 9%;
+
+    --destructive: 345 60% 50%;
+    --destructive-foreground: 40 33% 97%;
+
+    --border: 30 6% 22%;
+    --input: 30 6% 22%;
+    --ring: 12 70% 55%;
+
+    --success: 120 25% 45%;
+    --warning: 42 85% 50%;
+    --info: 220 20% 55%;
+
+    --text-primary: 38 36% 93%;
+    --text-secondary: 30 15% 72%;
+    --text-muted: 30 8% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Editorial serif headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply font-medium tracking-tight;
+    color: hsl(var(--text-primary));
+  }
+
+  h1 {
+    @apply text-4xl leading-tight;
+  }
+
+  h2 {
+    @apply text-2xl leading-snug;
+  }
+
+  h3 {
+    @apply text-xl leading-snug;
+  }
+
+  h4 {
+    @apply text-lg;
+  }
+
+  /* Body text */
+  p {
+    @apply leading-relaxed;
+    color: hsl(var(--text-secondary));
+    max-width: 65ch;
+  }
+
+  /* Code and monospace */
+  code, pre, kbd {
+    font-family: 'IBM Plex Mono', 'Menlo', monospace;
+  }
+
+  /* Links - editorial underline style */
+  a:not([class]) {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+  }
+
+  a:not([class]):hover {
+    color: hsl(var(--text-primary));
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: hsl(var(--primary) / 0.15);
+    color: hsl(var(--text-primary));
+  }
+}
+
+@layer components {
+  /* ============================================
+     EDITORIAL NAVIGATION
+     ============================================ */
+
+  .nav-section-title {
+    @apply text-[10px] font-medium uppercase tracking-[0.2em] px-4 py-3;
+    font-family: 'Source Serif 4', serif;
+    color: hsl(var(--text-muted));
+    letter-spacing: 0.2em;
+  }
+
+  .nav-link {
+    @apply block px-4 py-2 text-sm transition-all duration-200;
+    font-family: 'Source Serif 4', serif;
+    color: hsl(var(--text-secondary));
+  }
+
+  .nav-link:hover {
+    color: hsl(var(--text-primary));
+  }
+
+  .nav-link.active {
+    @apply font-semibold;
+    color: hsl(var(--text-primary));
+  }
+
+  /* ============================================
+     EDITORIAL CARDS
+     ============================================ */
+
+  .simple-card {
+    @apply border bg-card p-8;
+    border-color: hsl(var(--border));
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    @apply text-xl font-medium mb-2;
+    color: hsl(var(--text-primary));
+  }
+
+  .card-title::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: hsl(var(--text-primary));
+    margin-top: 12px;
+  }
+
+  .card-description {
+    @apply text-sm mt-4;
+    color: hsl(var(--text-secondary));
+  }
+
+  /* ============================================
+     EDITORIAL DECORATIVE ELEMENTS
+     ============================================ */
+
+  /* Thick black rule - use under section titles */
+  .editorial-rule {
+    width: 40px;
+    height: 4px;
+    background: hsl(var(--text-primary));
+    margin: 12px 0 24px 0;
+  }
+
+  .editorial-rule-wide {
+    width: 100%;
+    height: 2px;
+    background: hsl(var(--text-primary));
+  }
+
+  /* Thin decorative divider */
+  .editorial-divider {
+    width: 100%;
+    height: 1px;
+    background: hsl(var(--border));
+  }
+
+  /* Corner marks - print-inspired */
+  .corner-mark {
+    position: relative;
+  }
+
+  .corner-mark::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 16px;
+    height: 16px;
+    border-left: 2px solid hsl(var(--text-primary));
+    border-top: 2px solid hsl(var(--text-primary));
+  }
+
+  .corner-mark::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    width: 16px;
+    height: 16px;
+    border-right: 2px solid hsl(var(--text-primary));
+    border-bottom: 2px solid hsl(var(--text-primary));
+  }
+
+  /* Paper texture overlay */
+  .paper-texture {
+    position: relative;
+  }
+
+  .paper-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+  }
+
+  /* ============================================
+     EDITORIAL CODE BLOCKS
+     ============================================ */
+
+  .code-block {
+    @apply bg-card border border-border px-6 py-4 text-sm;
+    font-family: 'IBM Plex Mono', monospace;
+    color: hsl(var(--text-primary));
+  }
+
+  /* ============================================
+     EDITORIAL CALLOUTS
+     ============================================ */
+
+  .callout {
+    @apply bg-card border-l-4 px-6 py-4;
+    border-left-color: hsl(var(--primary));
+  }
+
+  .callout-label {
+    @apply text-xs font-medium uppercase tracking-widest mb-2;
+    font-family: 'IBM Plex Mono', monospace;
+    color: hsl(var(--primary));
+  }
+
+  /* ============================================
+     EDITORIAL STATS
+     ============================================ */
+
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    @apply text-4xl font-medium;
+    color: hsl(var(--text-primary));
+  }
+
+  .stat-label {
+    @apply text-xs uppercase tracking-widest mt-2;
+    font-family: 'IBM Plex Mono', monospace;
+    color: hsl(var(--text-muted));
+  }
+
+  /* ============================================
+     EDITORIAL BUTTONS
+     ============================================ */
+
+  .btn-primary {
+    @apply uppercase tracking-widest text-sm font-medium px-7 py-3.5;
+    @apply bg-primary text-primary-foreground;
+    @apply transition-all duration-200;
+    font-family: 'Source Serif 4', serif;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-primary:hover {
+    @apply -translate-y-px;
+    box-shadow: 0 4px 12px hsl(var(--primary) / 0.25);
+  }
+
+  .btn-primary:active {
+    @apply translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply uppercase tracking-widest text-sm font-medium px-7 py-3.5;
+    @apply bg-transparent border-2 border-foreground text-foreground;
+    @apply transition-all duration-200;
+    font-family: 'Source Serif 4', serif;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-foreground text-background;
+  }
+
+  /* ============================================
+     EDITORIAL FORM ELEMENTS
+     ============================================ */
+
+  .editorial-label {
+    @apply block text-xs uppercase tracking-widest mb-2;
+    font-family: 'IBM Plex Mono', monospace;
+    color: hsl(var(--text-muted));
+    letter-spacing: 0.1em;
+  }
+
+  .editorial-input {
+    @apply w-full bg-transparent border-b-2 py-3 text-base;
+    @apply transition-colors duration-200;
+    font-family: 'Source Serif 4', serif;
+    border-color: hsl(var(--border));
+    color: hsl(var(--text-primary));
+  }
+
+  .editorial-input::placeholder {
+    @apply italic;
+    color: hsl(var(--text-muted) / 0.6);
+  }
+
+  .editorial-input:focus {
+    @apply outline-none;
+    border-color: hsl(var(--primary));
+  }
+
+  /* ============================================
+     EDITORIAL TABLE OF CONTENTS
+     ============================================ */
+
+  .toc-link {
+    @apply block text-sm py-1.5 transition-colors duration-200;
+    font-family: 'Source Serif 4', serif;
+    color: hsl(var(--text-secondary));
+  }
+
+  .toc-link:hover {
+    color: hsl(var(--text-primary));
+  }
+
+  .toc-link.active {
+    @apply font-semibold;
+    color: hsl(var(--text-primary));
+  }
+
+  /* ============================================
+     EDITORIAL BADGES
+     ============================================ */
+
+  .editorial-badge {
+    @apply inline-flex items-center px-3 py-1 text-xs uppercase tracking-wider;
+    @apply border border-foreground;
+    font-family: 'IBM Plex Mono', monospace;
+    color: hsl(var(--text-primary));
+  }
+
+  .editorial-badge-gold {
+    @apply border-accent text-accent;
+    border-color: hsl(var(--accent));
+    color: hsl(var(--accent));
+  }
+
+  .editorial-badge-success {
+    border-color: hsl(var(--success));
+    color: hsl(var(--success));
+  }
+
+  /* ============================================
+     EDITORIAL STEP NUMBERS (Magazine style)
+     ============================================ */
+
+  .step-number {
+    font-family: 'Playfair Display', serif;
+    @apply text-5xl font-normal;
+    color: hsl(var(--border));
+  }
+
+  .step-number-active {
+    color: hsl(var(--primary));
+  }
+
+  /* ============================================
+     EDITORIAL SHADOWS (Subtle, refined)
+     ============================================ */
+
+  .shadow-card {
+    box-shadow: 0 1px 3px hsl(var(--text-primary) / 0.04),
+                0 4px 12px hsl(var(--text-primary) / 0.03);
+  }
+
+  .shadow-elevated {
+    box-shadow: 0 2px 8px hsl(var(--text-primary) / 0.06),
+                0 12px 32px hsl(var(--text-primary) / 0.08);
+  }
+
+  .shadow-floating {
+    box-shadow: 0 4px 16px hsl(var(--text-primary) / 0.08),
+                0 24px 48px hsl(var(--text-primary) / 0.12);
+  }
+
+  /* ============================================
+     EDITORIAL LINK ANIMATION
+     ============================================ */
+
+  .editorial-link {
+    @apply relative inline-block;
+    color: hsl(var(--text-primary));
+    text-decoration: none;
+  }
+
+  .editorial-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: hsl(var(--primary));
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .editorial-link:hover::after {
+    width: 100%;
+  }
+
+  /* ============================================
+     EDITORIAL PULL QUOTE
+     ============================================ */
+
+  .pull-quote {
+    @apply relative pl-8 py-4 my-8;
+    font-family: 'Playfair Display', serif;
+    @apply text-2xl italic;
+    color: hsl(var(--text-primary));
+  }
+
+  .pull-quote::before {
+    content: '"';
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 4rem;
+    line-height: 1;
+    color: hsl(var(--primary));
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  /* Font families */
+  .font-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-body {
+    font-family: 'Source Serif 4', Georgia, serif;
+  }
+
+  .font-mono {
+    font-family: 'IBM Plex Mono', 'Menlo', monospace;
+  }
+
+  /* Text colors */
+  .text-ink {
+    color: hsl(var(--text-primary));
+  }
+
+  .text-charcoal {
+    color: hsl(var(--text-secondary));
+  }
+
+  .text-stone {
+    color: hsl(var(--text-muted));
+  }
+
+  /* Editorial spacing utilities */
+  .editorial-section {
+    @apply py-16;
+  }
+
+  .editorial-container {
+    @apply max-w-4xl mx-auto px-6;
+  }
+
+  /* Status colors */
+  .text-success {
+    color: hsl(var(--success));
+  }
+
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+
+  .text-error {
+    color: hsl(var(--destructive));
+  }
+
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+
+  /* Tracking utilities */
+  .tracking-editorial {
+    letter-spacing: 0.05em;
+  }
+
+  .tracking-wide-editorial {
+    letter-spacing: 0.1em;
+  }
+
+  .tracking-widest-editorial {
+    letter-spacing: 0.2em;
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawLine {
+  from {
+    width: 0;
+  }
+  to {
+    width: 40px;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-slide-in {
+  animation: fadeSlideIn 0.4s ease-out forwards;
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.5s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-draw-line {
+  animation: drawLine 0.6s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* Stagger children */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeSlideIn 0.4s ease-out forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+/* Skeleton loader - simple gray rectangles */
+.skeleton {
+  @apply bg-muted;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--muted-foreground) / 0.08),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+  background-size: 200% 100%;
+}
+
+.skeleton-text {
+  @apply skeleton h-4 w-3/4;
+}
+
+.skeleton-title {
+  @apply skeleton h-6 w-1/2;
+}
+
+.skeleton-avatar {
+  @apply skeleton h-10 w-10;
+}
+
+.skeleton-card {
+  @apply skeleton h-32;
+}
+
+/* Progress line at top - thin terracotta */
+.progress-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: hsl(var(--border));
+  z-index: 100;
+  overflow: hidden;
+}
+
+.progress-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background: hsl(var(--primary));
+  animation: progress 1.2s ease-in-out infinite;
+}
+
+/* ============================================
+   MICRO-INTERACTIONS
+   ============================================ */
+
+/* Button hover lift */
+.hover-lift {
+  @apply transition-all duration-200;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
+}
+
+.hover-lift:active {
+  transform: translateY(0);
+}
+
+/* Card hover border highlight */
+.hover-border {
+  @apply transition-colors duration-200;
+}
+
+.hover-border:hover {
+  border-color: hsl(var(--foreground));
+}
+
+/* Link underline grow from left */
+.underline-grow {
+  position: relative;
+  text-decoration: none;
+}
+
+.underline-grow::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.3s ease;
+}
+
+.underline-grow:hover::after {
+  width: 100%;
+}
+
+/* Icon scale on hover */
+.icon-hover {
+  @apply transition-transform duration-200;
+}
+
+.icon-hover:hover {
+  transform: scale(1.1);
+}
+
+/* Subtle glow on focus */
+.focus-glow:focus-visible {
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+}
+
+/* ============================================
+   PAGE TRANSITIONS
+   ============================================ */
+
+/* Page enter animation */
+.page-enter {
+  animation: fadeSlideUp 0.4s ease-out;
+}
+
+/* Section reveal on scroll (CSS-only approximation) */
+.reveal-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   FOCUS STATES (Accessibility)
+   ============================================ */
+
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Remove outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}

@@ -1,0 +1,1 @@
+"""Resume Crafter backend application."""
