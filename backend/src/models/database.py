@@ -151,6 +151,54 @@ class TaskStatus(str, enum.Enum):
     FAILED = "failed"
 
 
+class JobSource(str, enum.Enum):
+    """Source where job was discovered."""
+
+    LINKEDIN = "linkedin"
+    GREENHOUSE = "greenhouse"
+    LEVER = "lever"
+    INDEED = "indeed"
+    GLASSDOOR = "glassdoor"
+    COMPANY_WEBSITE = "company_website"
+    REFERRAL = "referral"
+    OTHER = "other"
+
+
+class ApplicationStatus(str, enum.Enum):
+    """Status of job application in pipeline."""
+
+    DISCOVERED = "discovered"
+    FILTERED = "filtered"
+    QUEUED = "queued"
+    RESUME_GENERATED = "resume_generated"
+    APPLYING = "applying"
+    APPLIED = "applied"
+    VIEWED = "viewed"
+    RESPONSE_RECEIVED = "response_received"
+    INTERVIEW_SCHEDULED = "interview_scheduled"
+    REJECTED = "rejected"
+    OFFER_RECEIVED = "offer_received"
+
+
+class OutreachStatus(str, enum.Enum):
+    """Status of networking outreach."""
+
+    PENDING = "pending"
+    DRAFT_READY = "draft_ready"
+    SENT = "sent"
+    CONNECTED = "connected"
+    NO_RESPONSE = "no_response"
+
+
+class CampaignStatus(str, enum.Enum):
+    """Status of search campaign."""
+
+    DRAFT = "draft"
+    ACTIVE = "active"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+
+
 # ============ User Model ============
 
 
@@ -183,6 +231,15 @@ class User(Base, AuditMixin):
     publications: Mapped[list["Publication"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     job_descriptions: Mapped[list["JobDescription"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     resume_matches: Mapped[list["ResumeMatch"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+    # Automation relationships
+    search_campaigns: Mapped[list["SearchCampaign"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    discovered_jobs: Mapped[list["DiscoveredJob"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    job_applications: Mapped[list["JobApplication"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    company_profiles: Mapped[list["CompanyProfile"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    company_contacts: Mapped[list["CompanyContact"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    networking_outreach: Mapped[list["NetworkingOutreach"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    automation_logs: Mapped[list["AutomationLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 # ============ Document Model ============
@@ -838,4 +895,398 @@ class BackgroundTask(Base, AuditMixin):
 
     __table_args__ = (
         Index("ix_background_tasks_user_status", "user_id", "status"),
+    )
+
+
+# ============ Search Campaign Model ============
+
+
+class SearchCampaign(Base, AuditMixin):
+    """User's job search campaign with targeting criteria."""
+
+    __tablename__ = "search_campaigns"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[CampaignStatus] = mapped_column(
+        Enum(CampaignStatus, native_enum=False),
+        default=CampaignStatus.DRAFT,
+        nullable=False,
+    )
+
+    # Targeting criteria
+    target_roles: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
+    target_locations: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
+    target_companies: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+
+    # Keywords
+    keywords: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
+    excluded_keywords: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+
+    # Salary preferences
+    min_salary: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    max_salary: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Work preferences
+    remote_preference: Mapped[str | None] = mapped_column(String(50), nullable=True)  # remote/hybrid/onsite/any
+    experience_level: Mapped[str | None] = mapped_column(String(50), nullable=True)  # entry/mid/senior/lead/any
+
+    # Scheduling
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Additional configuration
+    settings: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="search_campaigns")
+    discovered_jobs: Mapped[list["DiscoveredJob"]] = relationship(back_populates="campaign", cascade="all, delete-orphan")
+    applications: Mapped[list["JobApplication"]] = relationship(back_populates="campaign")
+
+
+# ============ Discovered Job Model ============
+
+
+class DiscoveredJob(Base, AuditMixin):
+    """Jobs found by discovery agent."""
+
+    __tablename__ = "discovered_jobs"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    campaign_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("search_campaigns.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # External identification
+    external_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    source: Mapped[JobSource] = mapped_column(
+        Enum(JobSource, native_enum=False),
+        nullable=False,
+    )
+
+    # Job details
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    company: Mapped[str] = mapped_column(String(255), nullable=False)
+    location: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    requirements: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Salary information
+    salary_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    salary_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    salary_currency: Mapped[str | None] = mapped_column(String(10), nullable=True)
+
+    # URL and timing
+    url: Mapped[str] = mapped_column(String(1024), nullable=False)
+    posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Match analysis
+    match_score: Mapped[float | None] = mapped_column(Float, nullable=True)  # 0-100
+    match_reasoning: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_qualified: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=None)
+
+    # Raw data storage
+    raw_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+
+    # Relationships
+    campaign: Mapped["SearchCampaign"] = relationship(back_populates="discovered_jobs")
+    user: Mapped["User"] = relationship(back_populates="discovered_jobs")
+    application: Mapped["JobApplication | None"] = relationship(back_populates="discovered_job")
+
+    __table_args__ = (
+        Index("ix_discovered_jobs_user_source_external", "user_id", "source", "external_id"),
+        Index("ix_discovered_jobs_campaign_score", "campaign_id", "match_score"),
+    )
+
+
+# ============ Job Application Model ============
+
+
+class JobApplication(Base, AuditMixin):
+    """Application tracking with full pipeline."""
+
+    __tablename__ = "job_applications"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    discovered_job_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("discovered_jobs.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    campaign_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("search_campaigns.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    # Status tracking
+    status: Mapped[ApplicationStatus] = mapped_column(
+        Enum(ApplicationStatus, native_enum=False),
+        default=ApplicationStatus.DISCOVERED,
+        nullable=False,
+    )
+    status_history: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB, nullable=True)  # Array of {status, timestamp, notes}
+
+    # Job details (denormalized for quick access)
+    job_title: Mapped[str] = mapped_column(String(255), nullable=False)
+    company: Mapped[str] = mapped_column(String(255), nullable=False)
+    job_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+
+    # Application materials
+    resume_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("documents.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    cover_letter: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Timeline tracking
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    response_received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    interview_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Notes and feedback
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="job_applications")
+    discovered_job: Mapped["DiscoveredJob | None"] = relationship(back_populates="application")
+    campaign: Mapped["SearchCampaign | None"] = relationship(back_populates="applications")
+    resume: Mapped["Document | None"] = relationship()
+    outreach_messages: Mapped[list["NetworkingOutreach"]] = relationship(back_populates="application")
+
+    __table_args__ = (
+        Index("ix_job_applications_user_status", "user_id", "status"),
+        Index("ix_job_applications_user_company", "user_id", "company"),
+    )
+
+
+# ============ Company Profile Model ============
+
+
+class CompanyProfile(Base, AuditMixin):
+    """Company research for networking."""
+
+    __tablename__ = "company_profiles"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # Company links
+    website: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    careers_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+
+    # Company details
+    industry: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    size: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tech_stack: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+
+    # Research notes
+    culture_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    interview_process: Mapped[str | None] = mapped_column(Text, nullable=True)
+    glassdoor_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    # Additional research data
+    research_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="company_profiles")
+    contacts: Mapped[list["CompanyContact"]] = relationship(back_populates="company", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_company_profiles_user_name", "user_id", "name"),
+    )
+
+
+# ============ Company Contact Model ============
+
+
+class CompanyContact(Base, AuditMixin):
+    """People at target companies."""
+
+    __tablename__ = "company_contacts"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    company_profile_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("company_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Contact details
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    linkedin_url: Mapped[str] = mapped_column(String(512), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Relevance scoring (hiring manager > recruiter > engineer)
+    relevance_score: Mapped[float | None] = mapped_column(Float, nullable=True)  # 0-100
+
+    # Notes
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="company_contacts")
+    company: Mapped["CompanyProfile"] = relationship(back_populates="contacts")
+    outreach_messages: Mapped[list["NetworkingOutreach"]] = relationship(back_populates="contact", cascade="all, delete-orphan")
+
+
+# ============ Networking Outreach Model ============
+
+
+class NetworkingOutreach(Base, AuditMixin):
+    """Email/LinkedIn drafts (NOT auto-sent)."""
+
+    __tablename__ = "networking_outreach"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    contact_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("company_contacts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    application_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("job_applications.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    # Channel and status
+    channel: Mapped[str] = mapped_column(String(50), nullable=False)  # linkedin/email
+    status: Mapped[OutreachStatus] = mapped_column(
+        Enum(OutreachStatus, native_enum=False),
+        default=OutreachStatus.PENDING,
+        nullable=False,
+    )
+
+    # Message content
+    subject: Mapped[str | None] = mapped_column(String(255), nullable=True)  # For email
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+
+    # Timeline tracking
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    response_received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Follow-up tracking
+    follow_up_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="networking_outreach")
+    contact: Mapped["CompanyContact"] = relationship(back_populates="outreach_messages")
+    application: Mapped["JobApplication | None"] = relationship(back_populates="outreach_messages")
+
+    __table_args__ = (
+        Index("ix_networking_outreach_user_status", "user_id", "status"),
+        Index("ix_networking_outreach_contact", "contact_id"),
+    )
+
+
+# ============ Automation Log Model ============
+
+
+class AutomationLog(Base, AuditMixin):
+    """Audit trail for all automation actions."""
+
+    __tablename__ = "automation_logs"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Action classification
+    action_type: Mapped[str] = mapped_column(String(100), nullable=False)  # job_discovery, job_analysis, resume_generation, etc.
+    entity_type: Mapped[str] = mapped_column(String(100), nullable=False)  # campaign, job, application, contact, outreach
+    entity_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+
+    # Status tracking
+    status: Mapped[str] = mapped_column(String(50), nullable=False)  # started, completed, failed
+
+    # Details and performance
+    details: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)  # Input/output data, error messages
+    duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship(back_populates="automation_logs")
+
+    __table_args__ = (
+        Index("ix_automation_logs_user_action", "user_id", "action_type"),
+        Index("ix_automation_logs_user_created", "user_id", "created_at"),
     )

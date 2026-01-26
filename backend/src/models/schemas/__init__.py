@@ -1,6 +1,7 @@
 """Pydantic schemas for API request/response validation."""
 
 from .auth import *
+from .automation import *
 from .common import *
 from .document import *
 from .experience import *
