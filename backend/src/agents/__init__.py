@@ -12,6 +12,23 @@ from .project_agent import ProjectAgent
 from .skill_agent import SkillAgent
 from .supervisor import Supervisor, SupervisorResult, create_supervisor
 from .tools.registry import ToolRegistry
+from .automation import (
+    ContactDiscoveryAgent,
+    ContactDiscoveryResult,
+    ContactInfo,
+    JobQualificationAgent,
+    JobRequirements,
+    QualificationResult,
+    SkillMatch,
+    ExperienceMatch,
+    UserProfile,
+    OutreachAgent,
+    UserContext,
+    ContactContext,
+    JobContext,
+    OutreachDraft,
+    OutreachResult,
+)
 
 __all__ = [
     # Base
@@ -30,4 +47,20 @@ __all__ = [
     "create_supervisor",
     # Tools
     "ToolRegistry",
+    # Automation Agents
+    "ContactDiscoveryAgent",
+    "ContactDiscoveryResult",
+    "ContactInfo",
+    "JobQualificationAgent",
+    "JobRequirements",
+    "QualificationResult",
+    "SkillMatch",
+    "ExperienceMatch",
+    "UserProfile",
+    "OutreachAgent",
+    "UserContext",
+    "ContactContext",
+    "JobContext",
+    "OutreachDraft",
+    "OutreachResult",
 ]
