@@ -163,6 +163,20 @@ from src.tasks.job_tasks import analyze_job
 from src.tasks.matching_tasks import generate_match
 from src.tasks.project_enrichment_tasks import enrich_project_from_github
 
+# Import automation task functions
+from src.tasks.automation_tasks import (
+    discover_jobs,
+    analyze_discovered_job,
+    batch_analyze_jobs,
+    process_application_queue,
+    research_company,
+    generate_outreach,
+    batch_generate_outreach,
+    run_scheduled_discovery,
+    run_scheduled_analysis,
+    run_scheduled_queue_processing,
+)
+
 
 class WorkerSettings:
     """ARQ worker settings."""
@@ -171,10 +185,23 @@ class WorkerSettings:
 
     # Task functions
     functions = [
+        # Document processing tasks
         process_document,
         analyze_job,
         generate_match,
         enrich_project_from_github,
+        # Automation tasks
+        discover_jobs,
+        analyze_discovered_job,
+        batch_analyze_jobs,
+        process_application_queue,
+        research_company,
+        generate_outreach,
+        batch_generate_outreach,
+        # Scheduled cron tasks (can also be called manually)
+        run_scheduled_discovery,
+        run_scheduled_analysis,
+        run_scheduled_queue_processing,
     ]
 
     # Lifecycle hooks
@@ -191,7 +218,12 @@ class WorkerSettings:
     max_tries = 3
     retry_jobs = True
 
-    # Optional cron jobs (e.g., cleanup)
-    # cron_jobs = [
-    #     cron(cleanup_old_tasks, hour=3, minute=0),
-    # ]
+    # Cron jobs for periodic automation
+    cron_jobs = [
+        # Job discovery - runs every 6 hours
+        cron(run_scheduled_discovery, hour={0, 6, 12, 18}, minute=0),
+        # Job analysis - runs every 2 hours
+        cron(run_scheduled_analysis, hour=None, minute=30),
+        # Application queue processing - runs every 30 minutes during business hours
+        cron(run_scheduled_queue_processing, hour={9, 10, 11, 12, 13, 14, 15, 16, 17}, minute={0, 30}),
+    ]

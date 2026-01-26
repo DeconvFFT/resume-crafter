@@ -24,10 +24,29 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
+    import logging
+    logger = logging.getLogger(__name__)
+
     # Startup
     await init_db()
+
+    # Start the cron scheduler for automation jobs
+    from src.core.scheduler import start_scheduler, stop_scheduler
+    try:
+        await start_scheduler()
+        logger.info("Cron scheduler started successfully")
+    except Exception as e:
+        logger.warning(f"Failed to start scheduler: {e}")
+
     yield
+
     # Shutdown
+    try:
+        await stop_scheduler()
+        logger.info("Cron scheduler stopped")
+    except Exception as e:
+        logger.warning(f"Error stopping scheduler: {e}")
+
     await close_db()
 
 
@@ -120,6 +139,7 @@ from src.api.routes.jobs import router as jobs_router
 from src.api.routes.resume import router as resume_router
 from src.api.routes.tasks import router as tasks_router
 from src.api.routes.sse import router as sse_router
+from src.api.routes.automation import router as automation_router
 
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(profile_router, prefix="/profile", tags=["Profile"])
@@ -132,6 +152,7 @@ app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(resume_router, prefix="/resume", tags=["Resume"])
 app.include_router(tasks_router, prefix="/tasks", tags=["Tasks"])
 app.include_router(sse_router, prefix="/sse", tags=["SSE"])
+app.include_router(automation_router, prefix="/api/automation", tags=["Automation"])
 
 
 @app.get("/")
