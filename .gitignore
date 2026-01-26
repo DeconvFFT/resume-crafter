@@ -1,1 +1,8 @@
 backend/src/core/operouter*
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
