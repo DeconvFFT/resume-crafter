@@ -12,7 +12,7 @@ export default function Home() {
   useEffect(() => {
     // Redirect authenticated users to dashboard
     if (isAuthenticated()) {
-      router.replace("/documents");
+      router.replace("/dashboard");
     }
   }, [isAuthenticated, router]);
 

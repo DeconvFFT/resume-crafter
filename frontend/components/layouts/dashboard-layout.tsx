@@ -17,7 +17,6 @@ import {
   User,
   Zap,
   Activity,
-  Settings,
   Menu,
   LogOut,
 } from "lucide-react";
@@ -39,7 +38,7 @@ const navSections = [
   {
     title: null,
     items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     ],
   },
   {
@@ -91,7 +90,6 @@ function NavItem({ href, label, icon: Icon, isActive, onClick }: NavItemProps) {
       )}
       aria-current={isActive ? "page" : undefined}
     >
-      {/* Active indicator */}
       {isActive && (
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
       )}
@@ -140,7 +138,7 @@ function SidebarNav({ collapsed, toggleSection, onItemClick }: SidebarNavProps) 
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const isActive = pathname === item.href ||
-                  (item.href !== "/" && pathname.startsWith(item.href));
+                  (item.href !== "/dashboard" && pathname.startsWith(item.href));
                 return (
                   <NavItem
                     key={item.href}
@@ -160,12 +158,11 @@ function SidebarNav({ collapsed, toggleSection, onItemClick }: SidebarNavProps) 
   );
 }
 
-export default function DashboardLayout({
+export function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -182,10 +179,8 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <div className="min-h-screen flex bg-background">
-        {/* Header - Modern SaaS style */}
         <header className="fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border z-50 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            {/* Mobile menu trigger */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <button
@@ -212,7 +207,7 @@ export default function DashboardLayout({
             </Sheet>
 
             <Link
-              href="/"
+              href="/dashboard"
               className="font-semibold text-lg text-foreground hover:text-primary transition-colors"
             >
               Resume Crafter
@@ -223,7 +218,6 @@ export default function DashboardLayout({
             <CommandPalette />
             <ThemeToggle />
 
-            {/* User menu */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground hidden sm:inline max-w-[150px] truncate">
                 {user?.email}
@@ -240,14 +234,12 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Desktop Sidebar - Modern icon + label style */}
         <aside className="hidden md:block fixed top-14 left-0 bottom-0 w-56 border-r border-border bg-card/50 overflow-y-auto scrollbar-thin">
           <SidebarNav
             collapsed={collapsed}
             toggleSection={toggleSection}
           />
 
-          {/* User section at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border bg-card/50">
             <div className="flex items-center gap-3 px-3 py-2">
               <Avatar size="sm">
@@ -265,15 +257,12 @@ export default function DashboardLayout({
           </div>
         </aside>
 
-        {/* Main content */}
         <main className="flex-1 md:ml-56 mt-14">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-            {/* Breadcrumbs */}
             <div className="mb-6">
               <Breadcrumbs />
             </div>
 
-            {/* Page content */}
             <div className="animate-fade-up">
               {children}
             </div>
