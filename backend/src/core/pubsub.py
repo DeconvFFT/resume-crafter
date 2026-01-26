@@ -67,6 +67,7 @@ def _parse_redis_url() -> dict:
     Handles formats:
     - redis://localhost:6379/0
     - redis://default:password@host:port/0
+    - redis://default:password@host:port (no db specified)
     """
     from urllib.parse import urlparse
 
