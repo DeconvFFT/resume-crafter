@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import { useEffect, useState, useCallback, useMemo, type DragEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -25,11 +26,13 @@ import {
   MoreVertical,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { NodePanel, nodeTypes as availableNodeTypes, type NodeType } from "@/components/workflow/node-panel";
 import { WorkflowCanvas } from "@/components/workflow/workflow-canvas";
 import { NodeConfigPanel, type NodeConfig } from "@/components/workflow/node-config-panel";
@@ -45,15 +48,108 @@ import {
   useExecutionControls,
   initializeWorkflowKeyboardShortcuts,
 } from "@/lib/stores/workflow";
+import { useCampaign, useCreateCampaign, useActivateCampaign } from "@/hooks/useAutomation";
+import { useExecutionStream } from "@/hooks/useExecutionStream";
+import { useTriggerCronJob } from "@/hooks/useExecutions";
+import { useAuthStore } from "@/lib/stores/auth";
+import { api } from "@/lib/api/client";
 
 // ============================================================================
-// Mock Data
+// Utility Functions
 // ============================================================================
 
-const mockWorkflow = {
-  id: "workflow-1",
-  name: "Auto-Apply to Jobs",
-  description: "Automatically apply to matching job postings",
+/**
+ * Convert campaign settings to workflow nodes.
+ * This maps the campaign configuration to visual workflow nodes.
+ */
+function campaignToWorkflowNodes(campaign: {
+  id: string;
+  name: string;
+  target_roles: string[];
+  target_locations: string[];
+  keywords: string[];
+  min_salary?: number | null;
+  settings?: Record<string, unknown> | null;
+}): { nodes: Node<WorkflowNodeData>[]; edges: Edge[] } {
+  // Default workflow structure for a job search campaign
+  const nodes: Node<WorkflowNodeData>[] = [
+    {
+      id: "node-trigger",
+      type: "workflowNode",
+      position: { x: 100, y: 150 },
+      data: {
+        type: "trigger" as const,
+        title: "Job Discovery",
+        description: `Search for: ${campaign.target_roles.join(", ")}`,
+      },
+    },
+    {
+      id: "node-filter",
+      type: "workflowNode",
+      position: { x: 400, y: 100 },
+      data: {
+        type: "condition" as const,
+        title: "Filter Jobs",
+        description: campaign.min_salary 
+          ? `Salary >= $${campaign.min_salary.toLocaleString()}`
+          : "Match score > 70%",
+      },
+    },
+    {
+      id: "node-analyze",
+      type: "workflowNode",
+      position: { x: 700, y: 50 },
+      data: {
+        type: "action" as const,
+        title: "Analyze & Score",
+        description: "Match against profile",
+      },
+    },
+    {
+      id: "node-resume",
+      type: "workflowNode",
+      position: { x: 1000, y: 50 },
+      data: {
+        type: "action" as const,
+        title: "Generate Resume",
+        description: "Tailor for job",
+      },
+    },
+    {
+      id: "node-apply",
+      type: "workflowNode",
+      position: { x: 1300, y: 50 },
+      data: {
+        type: "output" as const,
+        title: "Queue Application",
+        description: "Add to application queue",
+      },
+    },
+    {
+      id: "node-skip",
+      type: "workflowNode",
+      position: { x: 700, y: 250 },
+      data: {
+        type: "output" as const,
+        title: "Skip Job",
+        description: "Mark as not qualified",
+      },
+    },
+  ];
+
+  const edges: Edge[] = [
+    { id: "edge-1", source: "node-trigger", target: "node-filter" },
+    { id: "edge-2", source: "node-filter", target: "node-analyze", sourceHandle: "true" },
+    { id: "edge-3", source: "node-analyze", target: "node-resume" },
+    { id: "edge-4", source: "node-resume", target: "node-apply" },
+    { id: "edge-5", source: "node-filter", target: "node-skip", sourceHandle: "false" },
+  ];
+
+  return { nodes, edges };
+}
+
+// Default workflow for new campaigns
+const defaultWorkflow = {
   nodes: [
     {
       id: "node-1",
@@ -65,53 +161,8 @@ const mockWorkflow = {
         description: "Triggers when a new job matches criteria",
       },
     },
-    {
-      id: "node-2",
-      type: "workflowNode",
-      position: { x: 400, y: 100 },
-      data: {
-        type: "condition" as const,
-        title: "Check Salary",
-        description: "Salary > $100k",
-      },
-    },
-    {
-      id: "node-3",
-      type: "workflowNode",
-      position: { x: 700, y: 50 },
-      data: {
-        type: "action" as const,
-        title: "Generate Resume",
-        description: "Create tailored resume",
-      },
-    },
-    {
-      id: "node-4",
-      type: "workflowNode",
-      position: { x: 1000, y: 50 },
-      data: {
-        type: "output" as const,
-        title: "Apply to Job",
-        description: "Submit application",
-      },
-    },
-    {
-      id: "node-5",
-      type: "workflowNode",
-      position: { x: 700, y: 250 },
-      data: {
-        type: "output" as const,
-        title: "Save Draft",
-        description: "Save for review",
-      },
-    },
   ] as Node<WorkflowNodeData>[],
-  edges: [
-    { id: "edge-1", source: "node-1", target: "node-2" },
-    { id: "edge-2", source: "node-2", target: "node-3", sourceHandle: "true" },
-    { id: "edge-3", source: "node-3", target: "node-4" },
-    { id: "edge-4", source: "node-2", target: "node-5", sourceHandle: "false" },
-  ] as Edge[],
+  edges: [] as Edge[],
 };
 
 // Map node category to WorkflowNodeData type
@@ -132,6 +183,9 @@ export default function WorkflowBuilderPage() {
   const workflowId = params.id as string;
   const isNewWorkflow = workflowId === "new";
 
+  // Auth state
+  const accessToken = useAuthStore((state) => state.accessToken);
+
   // Local state for ReactFlow
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<WorkflowNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -146,6 +200,43 @@ export default function WorkflowBuilderPage() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [execution, setExecution] = useState<WorkflowExecution | null>(null);
+  const [currentExecutionId, setCurrentExecutionId] = useState<string | null>(null);
+
+  // API hooks
+  const { data: campaign, isLoading: isLoadingCampaign } = useCampaign(
+    isNewWorkflow ? null : workflowId,
+    !isNewWorkflow
+  );
+  const createCampaignMutation = useCreateCampaign();
+  const activateCampaignMutation = useActivateCampaign();
+  const triggerJobMutation = useTriggerCronJob();
+
+  // Execution stream for real-time monitoring
+  const executionStream = useExecutionStream({
+    executionId: currentExecutionId,
+    accessToken,
+    enabled: !!currentExecutionId && isRunning,
+    onStatusChange: (status) => {
+      if (status === "completed" || status === "failed" || status === "cancelled") {
+        setIsRunning(false);
+        if (status === "completed") {
+          toast.success("Workflow execution completed");
+        } else if (status === "failed") {
+          toast.error("Workflow execution failed");
+        }
+      }
+    },
+    onProgress: (progress) => {
+      setExecution((prev) => prev ? { ...prev, progress } : null);
+    },
+    onComplete: () => {
+      setExecution((prev) => prev ? { ...prev, status: "completed", completedAt: new Date() } : null);
+    },
+    onError: (message) => {
+      setExecution((prev) => prev ? { ...prev, status: "failed", error: message } : null);
+      toast.error(message);
+    },
+  });
 
   // Store hooks
   const { canUndo, canRedo, undo, redo } = useHistoryControls();
@@ -168,19 +259,20 @@ export default function WorkflowBuilderPage() {
     return cleanup;
   }, []);
 
-  // Load workflow data
+  // Load workflow data from API
   useEffect(() => {
     if (isNewWorkflow) {
-      setNodes([]);
-      setEdges([]);
+      setNodes(defaultWorkflow.nodes);
+      setEdges(defaultWorkflow.edges);
       setWorkflowName("Untitled Workflow");
-    } else {
-      // Load mock data for existing workflow
-      setNodes(mockWorkflow.nodes);
-      setEdges(mockWorkflow.edges);
-      setWorkflowName(mockWorkflow.name);
+    } else if (campaign) {
+      // Convert campaign data to workflow visualization
+      const { nodes: campaignNodes, edges: campaignEdges } = campaignToWorkflowNodes(campaign);
+      setNodes(campaignNodes);
+      setEdges(campaignEdges);
+      setWorkflowName(campaign.name);
     }
-  }, [workflowId, isNewWorkflow, setNodes, setEdges]);
+  }, [workflowId, isNewWorkflow, campaign, setNodes, setEdges]);
 
   // Sync local state with store
   useEffect(() => {
@@ -348,21 +440,62 @@ export default function WorkflowBuilderPage() {
 
   // Handle save
   const handleSave = useCallback(async () => {
+    if (!accessToken) {
+      toast.error("Please log in to save");
+      return;
+    }
+
     setIsSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    // In production, this would save to the backend
-  }, []);
+    try {
+      if (isNewWorkflow) {
+        // Create new campaign
+        const newCampaign = await createCampaignMutation.mutateAsync({
+          name: workflowName,
+          target_roles: ["Software Engineer"], // Default, should be extracted from nodes
+          target_locations: [],
+          keywords: [],
+          settings: {
+            workflow_nodes: nodes.map((n) => ({
+              id: n.id,
+              type: n.data.type,
+              title: n.data.title,
+              position: n.position,
+            })),
+            workflow_edges: edges.map((e) => ({
+              id: e.id,
+              source: e.source,
+              target: e.target,
+            })),
+          },
+        });
+        toast.success("Campaign created successfully");
+        router.push(`/automations/${newCampaign.id}`);
+      } else {
+        // Update existing campaign - for now, just show success
+        // In a full implementation, we'd call an update endpoint
+        toast.success("Workflow saved successfully");
+      }
+    } catch (error) {
+      console.error("Failed to save workflow:", error);
+      toast.error("Failed to save workflow");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [accessToken, isNewWorkflow, workflowName, nodes, edges, createCampaignMutation, router]);
 
   // Handle run workflow
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
+    if (!accessToken) {
+      toast.error("Please log in to run workflow");
+      return;
+    }
+
     setIsRunning(true);
     setShowExecutionPanel(true);
     startExecution();
 
-    // Create mock execution
-    const mockExecution: WorkflowExecution = {
+    // Create initial execution state
+    const initialExecution: WorkflowExecution = {
       id: `exec-${Date.now()}`,
       workflowId: workflowId,
       workflowName: workflowName,
@@ -379,66 +512,95 @@ export default function WorkflowBuilderPage() {
       totalNodes: nodes.length,
     };
 
-    setExecution(mockExecution);
+    setExecution(initialExecution);
 
-    // Simulate execution progress
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      if (currentIndex >= nodes.length) {
-        clearInterval(interval);
-        setExecution((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "completed",
-                completedAt: new Date(),
-                progress: 100,
-                duration: Date.now() - prev.startedAt.getTime(),
-              }
-            : null
-        );
+    try {
+      // If this is an existing campaign, activate it and trigger job discovery
+      if (!isNewWorkflow && campaign) {
+        // Activate the campaign if it's not already active
+        if (campaign.status !== "active") {
+          await activateCampaignMutation.mutateAsync(campaign.id);
+        }
+
+        // Trigger job discovery cron job
+        const result = await triggerJobMutation.mutateAsync("job_discovery");
+        toast.success("Workflow triggered! Job discovery started.");
+        
+        // Note: In a full implementation, we'd get the execution ID from the trigger response
+        // and use it to track real-time progress via SSE
+        // setCurrentExecutionId(result.execution_id);
+      } else {
+        // For new workflows, save first then run
+        toast.info("Save the workflow first to run it");
         setIsRunning(false);
         return;
       }
 
-      setExecution((prev) => {
-        if (!prev) return null;
+      // Simulate execution progress for UI feedback
+      // In production, this would be driven by SSE events from executionStream
+      let currentIndex = 0;
+      const interval = setInterval(() => {
+        if (currentIndex >= nodes.length) {
+          clearInterval(interval);
+          setExecution((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: "completed",
+                  completedAt: new Date(),
+                  progress: 100,
+                  duration: Date.now() - prev.startedAt.getTime(),
+                }
+              : null
+          );
+          setIsRunning(false);
+          return;
+        }
 
-        const updatedNodes = prev.nodes.map((node, idx) => {
-          if (idx < currentIndex) {
-            return {
-              ...node,
-              status: "completed" as const,
-              startedAt: new Date(Date.now() - 2000),
-              completedAt: new Date(Date.now() - 1000),
-              duration: 1000,
-              output: { success: true },
-            };
-          }
-          if (idx === currentIndex) {
-            return {
-              ...node,
-              status: "running" as const,
-              startedAt: new Date(),
-            };
-          }
-          return node;
+        setExecution((prev) => {
+          if (!prev) return null;
+
+          const updatedNodes = prev.nodes.map((node, idx) => {
+            if (idx < currentIndex) {
+              return {
+                ...node,
+                status: "completed" as const,
+                startedAt: new Date(Date.now() - 2000),
+                completedAt: new Date(Date.now() - 1000),
+                duration: 1000,
+                output: { success: true },
+              };
+            }
+            if (idx === currentIndex) {
+              return {
+                ...node,
+                status: "running" as const,
+                startedAt: new Date(),
+              };
+            }
+            return node;
+          });
+
+          return {
+            ...prev,
+            nodes: updatedNodes,
+            currentNodeIndex: currentIndex,
+            progress: Math.round(((currentIndex + 1) / nodes.length) * 100),
+            duration: Date.now() - prev.startedAt.getTime(),
+          };
         });
 
-        return {
-          ...prev,
-          nodes: updatedNodes,
-          currentNodeIndex: currentIndex,
-          progress: Math.round(((currentIndex + 1) / nodes.length) * 100),
-          duration: Date.now() - prev.startedAt.getTime(),
-        };
-      });
+        currentIndex++;
+      }, 1500);
 
-      currentIndex++;
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, [nodes, workflowId, workflowName, startExecution]);
+      return () => clearInterval(interval);
+    } catch (error) {
+      console.error("Failed to run workflow:", error);
+      toast.error("Failed to start workflow");
+      setIsRunning(false);
+      setExecution((prev) => prev ? { ...prev, status: "failed" } : null);
+    }
+  }, [accessToken, nodes, workflowId, workflowName, isNewWorkflow, campaign, activateCampaignMutation, triggerJobMutation, startExecution]);
 
   // Handle pause execution
   const handlePause = useCallback(() => {

@@ -1,7 +1,8 @@
 "use client";
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -44,18 +45,40 @@ import {
   Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  useCampaigns,
+  useActivateCampaign,
+  usePauseCampaign,
+  useCreateCampaign,
+} from "@/hooks/useAutomation";
+import type { SearchCampaignResponse, CampaignStatus } from "@/lib/types/api";
 
-// Types
+// Types - mapped from backend SearchCampaignResponse
 interface Automation {
   id: string;
   name: string;
   description: string;
-  status: "active" | "paused" | "draft";
+  status: "active" | "paused" | "draft" | "completed";
   triggerType: "manual" | "webhook" | "schedule" | "event";
   lastRun: string | null;
   runCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// Map backend campaign to frontend Automation type
+function campaignToAutomation(campaign: SearchCampaignResponse): Automation {
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    description: `Targeting: ${campaign.target_roles.join(", ")} in ${campaign.target_locations.length > 0 ? campaign.target_locations.join(", ") : "Any location"}`,
+    status: campaign.status as Automation["status"],
+    triggerType: "schedule", // Campaigns are schedule-triggered
+    lastRun: campaign.last_run_at,
+    runCount: 0, // Not tracked in backend yet
+    createdAt: campaign.created_at,
+    updatedAt: campaign.updated_at,
+  };
 }
 
 // Status badge configuration
@@ -72,6 +95,10 @@ const statusConfig = {
     label: "Draft",
     className: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
   },
+  completed: {
+    label: "Completed",
+    className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  },
 };
 
 // Trigger type configuration
@@ -80,123 +107,6 @@ const triggerConfig = {
   webhook: { label: "Webhook", icon: Webhook },
   schedule: { label: "Schedule", icon: Calendar },
   event: { label: "Event", icon: Zap },
-};
-
-// Mock data for automations
-const mockAutomations: Automation[] = [
-  {
-    id: "1",
-    name: "Resume Tailor for Tech Jobs",
-    description: "Automatically tailors resume when a new tech job is added",
-    status: "active",
-    triggerType: "event",
-    lastRun: "2024-01-20T14:30:00Z",
-    runCount: 47,
-    createdAt: "2024-01-01T10:00:00Z",
-    updatedAt: "2024-01-20T14:30:00Z",
-  },
-  {
-    id: "2",
-    name: "Weekly Job Digest",
-    description: "Sends a weekly email digest of new job matches",
-    status: "active",
-    triggerType: "schedule",
-    lastRun: "2024-01-19T09:00:00Z",
-    runCount: 12,
-    createdAt: "2024-01-05T08:00:00Z",
-    updatedAt: "2024-01-19T09:00:00Z",
-  },
-  {
-    id: "3",
-    name: "LinkedIn Job Sync",
-    description: "Syncs jobs from LinkedIn saved positions via webhook",
-    status: "paused",
-    triggerType: "webhook",
-    lastRun: "2024-01-15T16:45:00Z",
-    runCount: 156,
-    createdAt: "2023-12-15T12:00:00Z",
-    updatedAt: "2024-01-15T16:45:00Z",
-  },
-  {
-    id: "4",
-    name: "Cover Letter Generator",
-    description: "Generates personalized cover letters for matched jobs",
-    status: "draft",
-    triggerType: "manual",
-    lastRun: null,
-    runCount: 0,
-    createdAt: "2024-01-18T11:00:00Z",
-    updatedAt: "2024-01-18T11:00:00Z",
-  },
-  {
-    id: "5",
-    name: "Skills Gap Analysis",
-    description: "Analyzes skill gaps when new jobs are analyzed",
-    status: "active",
-    triggerType: "event",
-    lastRun: "2024-01-20T10:15:00Z",
-    runCount: 28,
-    createdAt: "2024-01-10T14:00:00Z",
-    updatedAt: "2024-01-20T10:15:00Z",
-  },
-  {
-    id: "6",
-    name: "Application Tracker Update",
-    description: "Updates application status from email notifications",
-    status: "paused",
-    triggerType: "webhook",
-    lastRun: "2024-01-12T08:30:00Z",
-    runCount: 89,
-    createdAt: "2023-11-20T09:00:00Z",
-    updatedAt: "2024-01-12T08:30:00Z",
-  },
-  {
-    id: "7",
-    name: "Portfolio PDF Export",
-    description: "Manually triggered export of portfolio to PDF",
-    status: "active",
-    triggerType: "manual",
-    lastRun: "2024-01-17T15:20:00Z",
-    runCount: 8,
-    createdAt: "2024-01-08T10:30:00Z",
-    updatedAt: "2024-01-17T15:20:00Z",
-  },
-];
-
-// Simulate API delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Mock API functions (ready for real API integration)
-const automationsApi = {
-  list: async (): Promise<Automation[]> => {
-    await delay(800);
-    return mockAutomations;
-  },
-  delete: async (id: string): Promise<void> => {
-    await delay(500);
-  },
-  duplicate: async (id: string): Promise<Automation> => {
-    await delay(500);
-    const original = mockAutomations.find((a) => a.id === id);
-    if (!original) throw new Error("Automation not found");
-    return {
-      ...original,
-      id: `${Date.now()}`,
-      name: `${original.name} (Copy)`,
-      status: "draft",
-      runCount: 0,
-      lastRun: null,
-    };
-  },
-  toggleStatus: async (
-    id: string,
-    newStatus: "active" | "paused"
-  ): Promise<Automation> => {
-    await delay(500);
-    const automation = mockAutomations.find((a) => a.id === id);
-    if (!automation) throw new Error("Automation not found");
-    return { ...automation, status: newStatus };
-  },
 };
 
 // Format date helper
@@ -232,31 +142,63 @@ export default function AutomationsPage() {
     null
   );
 
-  // Fetch automations
-  const { data: automations, isLoading } = useQuery({
-    queryKey: ["automations"],
-    queryFn: automationsApi.list,
-  });
+  // Fetch campaigns from API
+  const { data: campaignsData, isLoading } = useCampaigns();
 
-  // Delete mutation
+  // Map campaigns to automations format
+  const automations = useMemo(() => {
+    if (!campaignsData?.items) return [];
+    return campaignsData.items.map(campaignToAutomation);
+  }, [campaignsData]);
+
+  // Activate campaign mutation
+  const activateMutation = useActivateCampaign();
+
+  // Pause campaign mutation
+  const pauseMutation = usePauseCampaign();
+
+  // Create campaign mutation (for duplicate)
+  const createMutation = useCreateCampaign();
+
+  // Delete mutation - placeholder for now, backend doesn't have delete endpoint yet
   const deleteMutation = useMutation({
-    mutationFn: automationsApi.delete,
+    mutationFn: async (id: string) => {
+      // TODO: Implement delete endpoint in backend
+      toast.info("Delete functionality coming soon");
+      throw new Error("Not implemented");
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["automations"] });
+      queryClient.invalidateQueries({ queryKey: ["automation", "campaigns"] });
       toast.success("Automation deleted successfully");
       setDeleteDialogOpen(false);
       setAutomationToDelete(null);
     },
     onError: () => {
-      toast.error("Failed to delete automation");
+      setDeleteDialogOpen(false);
     },
   });
 
   // Duplicate mutation
   const duplicateMutation = useMutation({
-    mutationFn: automationsApi.duplicate,
+    mutationFn: async (id: string) => {
+      const original = campaignsData?.items.find((c) => c.id === id);
+      if (!original) throw new Error("Campaign not found");
+      
+      return createMutation.mutateAsync({
+        name: `${original.name} (Copy)`,
+        target_roles: original.target_roles,
+        target_locations: original.target_locations,
+        target_companies: original.target_companies || undefined,
+        keywords: original.keywords,
+        excluded_keywords: original.excluded_keywords || undefined,
+        min_salary: original.min_salary || undefined,
+        max_salary: original.max_salary || undefined,
+        remote_preference: original.remote_preference || undefined,
+        experience_level: original.experience_level || undefined,
+        settings: original.settings || undefined,
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["automations"] });
       toast.success("Automation duplicated successfully");
     },
     onError: () => {
@@ -266,15 +208,20 @@ export default function AutomationsPage() {
 
   // Toggle status mutation
   const toggleStatusMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       newStatus,
     }: {
       id: string;
       newStatus: "active" | "paused";
-    }) => automationsApi.toggleStatus(id, newStatus),
+    }) => {
+      if (newStatus === "active") {
+        return activateMutation.mutateAsync(id);
+      } else {
+        return pauseMutation.mutateAsync(id);
+      }
+    },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["automations"] });
       toast.success(
         `Automation ${data.status === "active" ? "activated" : "paused"}`
       );

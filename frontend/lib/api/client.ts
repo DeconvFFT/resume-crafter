@@ -31,6 +31,30 @@ import type {
   MatchListResponse,
   ResumeGenerateResponse,
   TaskStatusResponse,
+  // Automation types
+  SearchCampaignCreate,
+  SearchCampaignResponse,
+  SearchCampaignListResponse,
+  DiscoveredJobListResponse,
+  AnalyzeJobResponse,
+  BulkActionRequest,
+  BulkActionResponse,
+  JobApplicationListResponse,
+  JobApplicationResponse,
+  QueueApplicationRequest,
+  ApplicationStatusUpdateRequest,
+  AutomationDashboard,
+  AutomationLogListResponse,
+  // Execution types
+  ExecutionListResponse,
+  ExecutionDetailResponse,
+  ExecutionCancelResponse,
+  ExecutionLogListResponse,
+  // Cron job types
+  CronJobConfig,
+  CronJobResponse,
+  CronJobListResponse,
+  CronJobSchedule,
 } from "@/lib/types/api";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -486,6 +510,348 @@ export const api = {
         return handleResponse<TaskStatusResponse>(response);
       }
       return null;
+    },
+  },
+
+  // Automation endpoints
+  automation: {
+    // Campaign endpoints
+    campaigns: {
+      list: async (
+        token: string,
+        params?: { status?: string; limit?: number; offset?: number }
+      ): Promise<SearchCampaignListResponse> => {
+        const searchParams = new URLSearchParams();
+        if (params?.status) searchParams.append("status", params.status);
+        if (params?.limit) searchParams.append("limit", params.limit.toString());
+        if (params?.offset) searchParams.append("offset", params.offset.toString());
+        const query = searchParams.toString();
+        const response = await fetch(
+          `${API_BASE_URL}/automation/campaigns${query ? `?${query}` : ""}`,
+          { headers: getAuthHeaders(token) }
+        );
+        return handleResponse<SearchCampaignListResponse>(response);
+      },
+
+      get: async (token: string, campaignId: string): Promise<SearchCampaignResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/campaigns/${campaignId}`, {
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<SearchCampaignResponse>(response);
+      },
+
+      create: async (token: string, data: SearchCampaignCreate): Promise<SearchCampaignResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/campaigns`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+          body: JSON.stringify(data),
+        });
+        return handleResponse<SearchCampaignResponse>(response);
+      },
+
+      activate: async (token: string, campaignId: string): Promise<SearchCampaignResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/campaigns/${campaignId}/activate`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<SearchCampaignResponse>(response);
+      },
+
+      pause: async (token: string, campaignId: string): Promise<SearchCampaignResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/campaigns/${campaignId}/pause`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<SearchCampaignResponse>(response);
+      },
+    },
+
+    // Discovered jobs endpoints
+    discoveredJobs: {
+      list: async (
+        token: string,
+        params?: {
+          campaign_id?: string;
+          min_score?: number;
+          is_qualified?: boolean;
+          company?: string;
+          limit?: number;
+          offset?: number;
+        }
+      ): Promise<DiscoveredJobListResponse> => {
+        const searchParams = new URLSearchParams();
+        if (params?.campaign_id) searchParams.append("campaign_id", params.campaign_id);
+        if (params?.min_score !== undefined) searchParams.append("min_score", params.min_score.toString());
+        if (params?.is_qualified !== undefined) searchParams.append("is_qualified", params.is_qualified.toString());
+        if (params?.company) searchParams.append("company", params.company);
+        if (params?.limit) searchParams.append("limit", params.limit.toString());
+        if (params?.offset) searchParams.append("offset", params.offset.toString());
+        const query = searchParams.toString();
+        const response = await fetch(
+          `${API_BASE_URL}/automation/discovered-jobs${query ? `?${query}` : ""}`,
+          { headers: getAuthHeaders(token) }
+        );
+        return handleResponse<DiscoveredJobListResponse>(response);
+      },
+
+      analyze: async (token: string, jobId: string): Promise<AnalyzeJobResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/discovered-jobs/${jobId}/analyze`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<AnalyzeJobResponse>(response);
+      },
+
+      bulkAction: async (token: string, data: BulkActionRequest): Promise<BulkActionResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/discovered-jobs/bulk-action`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+          body: JSON.stringify(data),
+        });
+        return handleResponse<BulkActionResponse>(response);
+      },
+    },
+
+    // Applications endpoints
+    applications: {
+      list: async (
+        token: string,
+        params?: {
+          status?: string;
+          campaign_id?: string;
+          company?: string;
+          limit?: number;
+          offset?: number;
+        }
+      ): Promise<JobApplicationListResponse> => {
+        const searchParams = new URLSearchParams();
+        if (params?.status) searchParams.append("status", params.status);
+        if (params?.campaign_id) searchParams.append("campaign_id", params.campaign_id);
+        if (params?.company) searchParams.append("company", params.company);
+        if (params?.limit) searchParams.append("limit", params.limit.toString());
+        if (params?.offset) searchParams.append("offset", params.offset.toString());
+        const query = searchParams.toString();
+        const response = await fetch(
+          `${API_BASE_URL}/automation/applications${query ? `?${query}` : ""}`,
+          { headers: getAuthHeaders(token) }
+        );
+        return handleResponse<JobApplicationListResponse>(response);
+      },
+
+      queue: async (token: string, data: QueueApplicationRequest): Promise<JobApplicationResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/applications/queue`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+          body: JSON.stringify(data),
+        });
+        return handleResponse<JobApplicationResponse>(response);
+      },
+
+      updateStatus: async (
+        token: string,
+        applicationId: string,
+        data: ApplicationStatusUpdateRequest
+      ): Promise<JobApplicationResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/applications/${applicationId}/status`, {
+          method: "PATCH",
+          headers: getAuthHeaders(token),
+          body: JSON.stringify(data),
+        });
+        return handleResponse<JobApplicationResponse>(response);
+      },
+    },
+
+    // Stats endpoints
+    stats: {
+      getDashboard: async (token: string): Promise<AutomationDashboard> => {
+        const response = await fetch(`${API_BASE_URL}/automation/stats`, {
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<AutomationDashboard>(response);
+      },
+    },
+
+    // Logs endpoints
+    logs: {
+      list: async (
+        token: string,
+        params?: {
+          action_type?: string;
+          entity_type?: string;
+          status?: string;
+          limit?: number;
+          offset?: number;
+        }
+      ): Promise<AutomationLogListResponse> => {
+        const searchParams = new URLSearchParams();
+        if (params?.action_type) searchParams.append("action_type", params.action_type);
+        if (params?.entity_type) searchParams.append("entity_type", params.entity_type);
+        if (params?.status) searchParams.append("status", params.status);
+        if (params?.limit) searchParams.append("limit", params.limit.toString());
+        if (params?.offset) searchParams.append("offset", params.offset.toString());
+        const query = searchParams.toString();
+        const response = await fetch(
+          `${API_BASE_URL}/automation/logs${query ? `?${query}` : ""}`,
+          { headers: getAuthHeaders(token) }
+        );
+        return handleResponse<AutomationLogListResponse>(response);
+      },
+    },
+
+    // Execution endpoints
+    executions: {
+      list: async (
+        token: string,
+        params?: {
+          workflow_type?: string;
+          status?: string;
+          campaign_id?: string;
+          entity_id?: string;
+          started_after?: string;
+          started_before?: string;
+          page?: number;
+          page_size?: number;
+        }
+      ): Promise<ExecutionListResponse> => {
+        const searchParams = new URLSearchParams();
+        if (params?.workflow_type) searchParams.append("workflow_type", params.workflow_type);
+        if (params?.status) searchParams.append("status", params.status);
+        if (params?.campaign_id) searchParams.append("campaign_id", params.campaign_id);
+        if (params?.entity_id) searchParams.append("entity_id", params.entity_id);
+        if (params?.started_after) searchParams.append("started_after", params.started_after);
+        if (params?.started_before) searchParams.append("started_before", params.started_before);
+        if (params?.page) searchParams.append("page", params.page.toString());
+        if (params?.page_size) searchParams.append("page_size", params.page_size.toString());
+        const query = searchParams.toString();
+        const response = await fetch(
+          `${API_BASE_URL}/automation/executions${query ? `?${query}` : ""}`,
+          { headers: getAuthHeaders(token) }
+        );
+        return handleResponse<ExecutionListResponse>(response);
+      },
+
+      get: async (
+        token: string,
+        executionId: string,
+        params?: { include_logs?: boolean; log_limit?: number }
+      ): Promise<ExecutionDetailResponse> => {
+        const searchParams = new URLSearchParams();
+        if (params?.include_logs !== undefined) searchParams.append("include_logs", params.include_logs.toString());
+        if (params?.log_limit) searchParams.append("log_limit", params.log_limit.toString());
+        const query = searchParams.toString();
+        const response = await fetch(
+          `${API_BASE_URL}/automation/executions/${executionId}${query ? `?${query}` : ""}`,
+          { headers: getAuthHeaders(token) }
+        );
+        return handleResponse<ExecutionDetailResponse>(response);
+      },
+
+      cancel: async (token: string, executionId: string, reason?: string): Promise<ExecutionCancelResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/executions/${executionId}/cancel`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+          body: JSON.stringify(reason ? { reason } : {}),
+        });
+        return handleResponse<ExecutionCancelResponse>(response);
+      },
+
+      getLogs: async (
+        token: string,
+        executionId: string,
+        params?: {
+          level?: string;
+          step_id?: string;
+          offset?: number;
+          limit?: number;
+          newest_first?: boolean;
+        }
+      ): Promise<ExecutionLogListResponse> => {
+        const searchParams = new URLSearchParams();
+        if (params?.level) searchParams.append("level", params.level);
+        if (params?.step_id) searchParams.append("step_id", params.step_id);
+        if (params?.offset !== undefined) searchParams.append("offset", params.offset.toString());
+        if (params?.limit) searchParams.append("limit", params.limit.toString());
+        if (params?.newest_first !== undefined) searchParams.append("newest_first", params.newest_first.toString());
+        const query = searchParams.toString();
+        const response = await fetch(
+          `${API_BASE_URL}/automation/executions/${executionId}/logs${query ? `?${query}` : ""}`,
+          { headers: getAuthHeaders(token) }
+        );
+        return handleResponse<ExecutionLogListResponse>(response);
+      },
+
+      getStreamUrl: (executionId: string, token: string, includeHistory?: boolean): string => {
+        const params = new URLSearchParams();
+        params.append("token", token);
+        if (includeHistory !== undefined) params.append("include_history", includeHistory.toString());
+        return `${API_BASE_URL}/automation/executions/${executionId}/stream?${params.toString()}`;
+      },
+    },
+
+    // Cron job endpoints
+    cronJobs: {
+      list: async (token: string): Promise<CronJobListResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs`, {
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<CronJobListResponse>(response);
+      },
+
+      get: async (token: string, jobType: string): Promise<CronJobResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}`, {
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<CronJobResponse>(response);
+      },
+
+      pause: async (token: string, jobType: string): Promise<CronJobResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/pause`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<CronJobResponse>(response);
+      },
+
+      resume: async (token: string, jobType: string): Promise<CronJobResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/resume`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<CronJobResponse>(response);
+      },
+
+      trigger: async (token: string, jobType: string): Promise<CronJobResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/trigger`, {
+          method: "POST",
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<CronJobResponse>(response);
+      },
+
+      updateConfig: async (token: string, jobType: string, config: CronJobConfig): Promise<CronJobResponse> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/config`, {
+          method: "PUT",
+          headers: getAuthHeaders(token),
+          body: JSON.stringify(config),
+        });
+        return handleResponse<CronJobResponse>(response);
+      },
+
+      getSchedule: async (token: string): Promise<CronJobSchedule> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/schedule`, {
+          headers: getAuthHeaders(token),
+        });
+        return handleResponse<CronJobSchedule>(response);
+      },
+
+      updateSchedule: async (token: string, schedule: CronJobSchedule): Promise<CronJobSchedule> => {
+        const response = await fetch(`${API_BASE_URL}/automation/cron/schedule`, {
+          method: "PUT",
+          headers: getAuthHeaders(token),
+          body: JSON.stringify(schedule),
+        });
+        return handleResponse<CronJobSchedule>(response);
+      },
     },
   },
 };

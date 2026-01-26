@@ -485,3 +485,390 @@ export interface TaskStatusResponse {
   created_at: string;
   updated_at: string;
 }
+
+// ============================================================================
+// Automation Types - Search Campaigns
+// ============================================================================
+
+export type CampaignStatus = "draft" | "active" | "paused" | "completed";
+export type RemotePreference = "remote" | "hybrid" | "onsite" | "any";
+export type ExperienceLevel = "entry" | "mid" | "senior" | "lead" | "any";
+
+export interface SearchCampaignCreate {
+  name: string;
+  target_roles: string[];
+  target_locations?: string[];
+  target_companies?: string[];
+  keywords?: string[];
+  excluded_keywords?: string[];
+  min_salary?: number;
+  max_salary?: number;
+  remote_preference?: RemotePreference;
+  experience_level?: ExperienceLevel;
+  settings?: Record<string, unknown>;
+}
+
+export interface SearchCampaignUpdate {
+  name?: string;
+  status?: CampaignStatus;
+  target_roles?: string[];
+  target_locations?: string[];
+  target_companies?: string[];
+  keywords?: string[];
+  excluded_keywords?: string[];
+  min_salary?: number;
+  max_salary?: number;
+  remote_preference?: RemotePreference;
+  experience_level?: ExperienceLevel;
+  settings?: Record<string, unknown>;
+}
+
+export interface SearchCampaignResponse {
+  id: string;
+  user_id: string;
+  name: string;
+  status: CampaignStatus;
+  target_roles: string[];
+  target_locations: string[];
+  target_companies: string[] | null;
+  keywords: string[];
+  excluded_keywords: string[] | null;
+  min_salary: number | null;
+  max_salary: number | null;
+  remote_preference: RemotePreference | null;
+  experience_level: ExperienceLevel | null;
+  last_run_at: string | null;
+  next_run_at: string | null;
+  settings: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SearchCampaignListResponse {
+  items: SearchCampaignResponse[];
+  total: number;
+}
+
+// ============================================================================
+// Automation Types - Discovered Jobs
+// ============================================================================
+
+export interface DiscoveredJobResponse {
+  id: string;
+  campaign_id: string;
+  user_id: string;
+  external_id: string;
+  source: string;
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  requirements: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string | null;
+  url: string;
+  posted_at: string | null;
+  match_score: number | null;
+  match_reasoning: string | null;
+  is_qualified: boolean | null;
+  created_at: string;
+}
+
+export interface DiscoveredJobListResponse {
+  items: DiscoveredJobResponse[];
+  total: number;
+}
+
+export interface BulkActionRequest {
+  job_ids: string[];
+  action: "approve" | "reject";
+}
+
+export interface BulkActionResponse {
+  processed: number;
+  failed: number;
+  errors?: Array<{ job_id: string; error: string }>;
+}
+
+export interface AnalyzeJobResponse {
+  job_id: string;
+  match_score: number | null;
+  match_reasoning: string | null;
+  is_qualified: boolean | null;
+}
+
+// ============================================================================
+// Automation Types - Job Applications
+// ============================================================================
+
+export type ApplicationStatus =
+  | "discovered"
+  | "filtered"
+  | "queued"
+  | "resume_generated"
+  | "applying"
+  | "applied"
+  | "viewed"
+  | "response_received"
+  | "interview_scheduled"
+  | "rejected"
+  | "offer_received";
+
+export interface JobApplicationCreate {
+  discovered_job_id?: string;
+  campaign_id?: string;
+  job_title: string;
+  company: string;
+  job_url?: string;
+  notes?: string;
+}
+
+export interface JobApplicationUpdate {
+  status?: ApplicationStatus;
+  resume_id?: string;
+  cover_letter?: string;
+  notes?: string;
+  rejection_reason?: string;
+}
+
+export interface JobApplicationResponse {
+  id: string;
+  user_id: string;
+  discovered_job_id: string | null;
+  campaign_id: string | null;
+  status: ApplicationStatus;
+  status_history: Array<{ status: string; timestamp: string; notes?: string }> | null;
+  job_title: string;
+  company: string;
+  job_url: string | null;
+  resume_id: string | null;
+  cover_letter: string | null;
+  applied_at: string | null;
+  response_received_at: string | null;
+  interview_scheduled_at: string | null;
+  notes: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobApplicationListResponse {
+  items: JobApplicationResponse[];
+  total: number;
+}
+
+export interface QueueApplicationRequest {
+  discovered_job_id: string;
+  notes?: string;
+}
+
+export interface ApplicationStatusUpdateRequest {
+  status: ApplicationStatus;
+  notes?: string;
+}
+
+// ============================================================================
+// Automation Types - Dashboard Stats
+// ============================================================================
+
+export interface ApplicationPipelineStats {
+  discovered: number;
+  filtered: number;
+  queued: number;
+  resume_generated: number;
+  applying: number;
+  applied: number;
+  viewed: number;
+  response_received: number;
+  interview_scheduled: number;
+  rejected: number;
+  offer_received: number;
+}
+
+export interface AutomationDashboard {
+  active_campaigns: number;
+  total_jobs_discovered: number;
+  pending_applications: number;
+  applications_this_week: number;
+  response_rate: number;
+  interview_rate: number;
+  pipeline_stats: ApplicationPipelineStats;
+}
+
+// ============================================================================
+// Automation Types - Automation Logs
+// ============================================================================
+
+export interface AutomationLogResponse {
+  id: string;
+  user_id: string;
+  action_type: string;
+  entity_type: string;
+  entity_id: string | null;
+  status: string;
+  details: Record<string, unknown> | null;
+  duration_ms: number | null;
+  created_at: string;
+}
+
+export interface AutomationLogListResponse {
+  items: AutomationLogResponse[];
+  total: number;
+}
+
+// ============================================================================
+// Execution Types - Workflow Execution Monitoring
+// ============================================================================
+
+export type ExecutionStatus =
+  | "pending"
+  | "running"
+  | "paused"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+export type ExecutionStepStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed"
+  | "skipped";
+
+export type WorkflowType =
+  | "job_discovery"
+  | "job_analysis"
+  | "resume_generation"
+  | "application_processing"
+  | "company_research"
+  | "contact_discovery"
+  | "outreach_generation";
+
+export type LogLevel = "debug" | "info" | "warning" | "error";
+
+export interface ExecutionLogEntry {
+  id: string;
+  execution_id: string;
+  step_id: string | null;
+  level: LogLevel;
+  message: string;
+  data: Record<string, unknown> | null;
+  timestamp: string;
+}
+
+export interface ExecutionStepResponse {
+  id: string;
+  execution_id: string;
+  name: string;
+  description: string | null;
+  status: ExecutionStepStatus;
+  order_index: number;
+  started_at: string | null;
+  completed_at: string | null;
+  duration_ms: number | null;
+  result: Record<string, unknown> | null;
+  error_message: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExecutionResponse {
+  id: string;
+  user_id: string;
+  workflow_type: WorkflowType;
+  status: ExecutionStatus;
+  campaign_id: string | null;
+  entity_id: string | null;
+  entity_type: string | null;
+  config: Record<string, unknown> | null;
+  progress: number;
+  current_step: string | null;
+  total_steps: number;
+  completed_steps: number;
+  started_at: string | null;
+  completed_at: string | null;
+  duration_ms: number | null;
+  result: Record<string, unknown> | null;
+  error_message: string | null;
+  scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExecutionDetailResponse extends ExecutionResponse {
+  steps: ExecutionStepResponse[];
+  recent_logs: ExecutionLogEntry[];
+}
+
+export interface ExecutionListResponse {
+  items: ExecutionResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
+
+export interface ExecutionLogListResponse {
+  items: ExecutionLogEntry[];
+  total: number;
+  has_more: boolean;
+}
+
+export interface ExecutionCancelRequest {
+  reason?: string;
+}
+
+export interface ExecutionCancelResponse {
+  id: string;
+  status: ExecutionStatus;
+  cancelled_at: string;
+  reason: string | null;
+}
+
+export interface ExecutionSSEEvent {
+  event_type: string;
+  execution_id: string;
+  timestamp: string;
+  data: Record<string, unknown>;
+}
+
+// ============================================================================
+// Cron Job Types
+// ============================================================================
+
+export type CronJobStatus = "active" | "paused" | "disabled";
+export type CronJobType = "job_discovery" | "job_analysis" | "application_queue";
+
+export interface CronJobConfig {
+  job_type: CronJobType;
+  interval_seconds: number;
+  max_retries?: number;
+  retry_delay_seconds?: number;
+  config?: Record<string, unknown>;
+}
+
+export interface CronJobResponse {
+  job_type: CronJobType;
+  status: CronJobStatus;
+  interval_seconds: number;
+  last_run_at: string | null;
+  next_run_at: string | null;
+  last_run_status: string | null;
+  last_run_duration_ms: number | null;
+  run_count: number;
+  error_count: number;
+  config: Record<string, unknown> | null;
+}
+
+export interface CronJobListResponse {
+  items: CronJobResponse[];
+}
+
+export interface CronJobSchedule {
+  job_discovery_interval_hours: number;
+  job_analysis_interval_hours: number;
+  application_queue_delay_seconds: number;
+  application_queue_batch_size: number;
+}
