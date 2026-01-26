@@ -41,7 +41,9 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken, refreshToken, expiresAt });
         // Set a cookie for middleware to detect auth status
         if (typeof document !== "undefined") {
-          document.cookie = `resume-crafter-auth=true; path=/; max-age=${expiresIn}; SameSite=Lax`;
+          const isSecure = window.location.protocol === "https:";
+          const securePart = isSecure ? "; Secure" : "";
+          document.cookie = `resume-crafter-auth=true; path=/; max-age=${expiresIn}; SameSite=Lax${securePart}`;
         }
       },
 
@@ -56,7 +58,9 @@ export const useAuthStore = create<AuthState>()(
         });
         // Remove the auth cookie
         if (typeof document !== "undefined") {
-          document.cookie = "resume-crafter-auth=; path=/; max-age=0; SameSite=Lax";
+          const isSecure = window.location.protocol === "https:";
+          const securePart = isSecure ? "; Secure" : "";
+          document.cookie = `resume-crafter-auth=; path=/; max-age=0; SameSite=Lax${securePart}`;
         }
       },
 
