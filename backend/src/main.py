@@ -152,7 +152,7 @@ app.include_router(jobs_router, prefix="/jobs", tags=["Jobs"])
 app.include_router(resume_router, prefix="/resume", tags=["Resume"])
 app.include_router(tasks_router, prefix="/tasks", tags=["Tasks"])
 app.include_router(sse_router, prefix="/sse", tags=["SSE"])
-app.include_router(automation_router, prefix="/automation", tags=["Automation"])
+app.include_router(automation_router, prefix="/api/automation", tags=["Automation"])
 
 
 @app.get("/")

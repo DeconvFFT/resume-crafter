@@ -527,21 +527,21 @@ export const api = {
         if (params?.offset) searchParams.append("offset", params.offset.toString());
         const query = searchParams.toString();
         const response = await fetch(
-          `${API_BASE_URL}/automation/campaigns${query ? `?${query}` : ""}`,
+          `${API_BASE_URL}/api/automation/campaigns${query ? `?${query}` : ""}`,
           { headers: getAuthHeaders(token) }
         );
         return handleResponse<SearchCampaignListResponse>(response);
       },
 
       get: async (token: string, campaignId: string): Promise<SearchCampaignResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/campaigns/${campaignId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/campaigns/${campaignId}`, {
           headers: getAuthHeaders(token),
         });
         return handleResponse<SearchCampaignResponse>(response);
       },
 
       create: async (token: string, data: SearchCampaignCreate): Promise<SearchCampaignResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/campaigns`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/campaigns`, {
           method: "POST",
           headers: getAuthHeaders(token),
           body: JSON.stringify(data),
@@ -550,7 +550,7 @@ export const api = {
       },
 
       activate: async (token: string, campaignId: string): Promise<SearchCampaignResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/campaigns/${campaignId}/activate`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/campaigns/${campaignId}/activate`, {
           method: "POST",
           headers: getAuthHeaders(token),
         });
@@ -558,7 +558,7 @@ export const api = {
       },
 
       pause: async (token: string, campaignId: string): Promise<SearchCampaignResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/campaigns/${campaignId}/pause`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/campaigns/${campaignId}/pause`, {
           method: "POST",
           headers: getAuthHeaders(token),
         });
@@ -588,14 +588,14 @@ export const api = {
         if (params?.offset) searchParams.append("offset", params.offset.toString());
         const query = searchParams.toString();
         const response = await fetch(
-          `${API_BASE_URL}/automation/discovered-jobs${query ? `?${query}` : ""}`,
+          `${API_BASE_URL}/api/automation/discovered-jobs${query ? `?${query}` : ""}`,
           { headers: getAuthHeaders(token) }
         );
         return handleResponse<DiscoveredJobListResponse>(response);
       },
 
       analyze: async (token: string, jobId: string): Promise<AnalyzeJobResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/discovered-jobs/${jobId}/analyze`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/discovered-jobs/${jobId}/analyze`, {
           method: "POST",
           headers: getAuthHeaders(token),
         });
@@ -603,7 +603,7 @@ export const api = {
       },
 
       bulkAction: async (token: string, data: BulkActionRequest): Promise<BulkActionResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/discovered-jobs/bulk-action`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/discovered-jobs/bulk-action`, {
           method: "POST",
           headers: getAuthHeaders(token),
           body: JSON.stringify(data),
@@ -632,14 +632,14 @@ export const api = {
         if (params?.offset) searchParams.append("offset", params.offset.toString());
         const query = searchParams.toString();
         const response = await fetch(
-          `${API_BASE_URL}/automation/applications${query ? `?${query}` : ""}`,
+          `${API_BASE_URL}/api/automation/applications${query ? `?${query}` : ""}`,
           { headers: getAuthHeaders(token) }
         );
         return handleResponse<JobApplicationListResponse>(response);
       },
 
       queue: async (token: string, data: QueueApplicationRequest): Promise<JobApplicationResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/applications/queue`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/applications/queue`, {
           method: "POST",
           headers: getAuthHeaders(token),
           body: JSON.stringify(data),
@@ -652,7 +652,7 @@ export const api = {
         applicationId: string,
         data: ApplicationStatusUpdateRequest
       ): Promise<JobApplicationResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/applications/${applicationId}/status`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/applications/${applicationId}/status`, {
           method: "PATCH",
           headers: getAuthHeaders(token),
           body: JSON.stringify(data),
@@ -664,7 +664,7 @@ export const api = {
     // Stats endpoints
     stats: {
       getDashboard: async (token: string): Promise<AutomationDashboard> => {
-        const response = await fetch(`${API_BASE_URL}/automation/stats`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/stats`, {
           headers: getAuthHeaders(token),
         });
         return handleResponse<AutomationDashboard>(response);
@@ -691,7 +691,7 @@ export const api = {
         if (params?.offset) searchParams.append("offset", params.offset.toString());
         const query = searchParams.toString();
         const response = await fetch(
-          `${API_BASE_URL}/automation/logs${query ? `?${query}` : ""}`,
+          `${API_BASE_URL}/api/automation/logs${query ? `?${query}` : ""}`,
           { headers: getAuthHeaders(token) }
         );
         return handleResponse<AutomationLogListResponse>(response);
@@ -724,7 +724,7 @@ export const api = {
         if (params?.page_size) searchParams.append("page_size", params.page_size.toString());
         const query = searchParams.toString();
         const response = await fetch(
-          `${API_BASE_URL}/automation/executions${query ? `?${query}` : ""}`,
+          `${API_BASE_URL}/api/automation/executions${query ? `?${query}` : ""}`,
           { headers: getAuthHeaders(token) }
         );
         return handleResponse<ExecutionListResponse>(response);
@@ -740,14 +740,14 @@ export const api = {
         if (params?.log_limit) searchParams.append("log_limit", params.log_limit.toString());
         const query = searchParams.toString();
         const response = await fetch(
-          `${API_BASE_URL}/automation/executions/${executionId}${query ? `?${query}` : ""}`,
+          `${API_BASE_URL}/api/automation/executions/${executionId}${query ? `?${query}` : ""}`,
           { headers: getAuthHeaders(token) }
         );
         return handleResponse<ExecutionDetailResponse>(response);
       },
 
       cancel: async (token: string, executionId: string, reason?: string): Promise<ExecutionCancelResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/executions/${executionId}/cancel`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/executions/${executionId}/cancel`, {
           method: "POST",
           headers: getAuthHeaders(token),
           body: JSON.stringify(reason ? { reason } : {}),
@@ -774,7 +774,7 @@ export const api = {
         if (params?.newest_first !== undefined) searchParams.append("newest_first", params.newest_first.toString());
         const query = searchParams.toString();
         const response = await fetch(
-          `${API_BASE_URL}/automation/executions/${executionId}/logs${query ? `?${query}` : ""}`,
+          `${API_BASE_URL}/api/automation/executions/${executionId}/logs${query ? `?${query}` : ""}`,
           { headers: getAuthHeaders(token) }
         );
         return handleResponse<ExecutionLogListResponse>(response);
@@ -784,28 +784,28 @@ export const api = {
         const params = new URLSearchParams();
         params.append("token", token);
         if (includeHistory !== undefined) params.append("include_history", includeHistory.toString());
-        return `${API_BASE_URL}/automation/executions/${executionId}/stream?${params.toString()}`;
+        return `${API_BASE_URL}/api/automation/executions/${executionId}/stream?${params.toString()}`;
       },
     },
 
     // Cron job endpoints
     cronJobs: {
       list: async (token: string): Promise<CronJobListResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/jobs`, {
           headers: getAuthHeaders(token),
         });
         return handleResponse<CronJobListResponse>(response);
       },
 
       get: async (token: string, jobType: string): Promise<CronJobResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/jobs/${jobType}`, {
           headers: getAuthHeaders(token),
         });
         return handleResponse<CronJobResponse>(response);
       },
 
       pause: async (token: string, jobType: string): Promise<CronJobResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/pause`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/jobs/${jobType}/pause`, {
           method: "POST",
           headers: getAuthHeaders(token),
         });
@@ -813,7 +813,7 @@ export const api = {
       },
 
       resume: async (token: string, jobType: string): Promise<CronJobResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/resume`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/jobs/${jobType}/resume`, {
           method: "POST",
           headers: getAuthHeaders(token),
         });
@@ -821,7 +821,7 @@ export const api = {
       },
 
       trigger: async (token: string, jobType: string): Promise<CronJobResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/trigger`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/jobs/${jobType}/trigger`, {
           method: "POST",
           headers: getAuthHeaders(token),
         });
@@ -829,7 +829,7 @@ export const api = {
       },
 
       updateConfig: async (token: string, jobType: string, config: CronJobConfig): Promise<CronJobResponse> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/jobs/${jobType}/config`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/jobs/${jobType}/config`, {
           method: "PUT",
           headers: getAuthHeaders(token),
           body: JSON.stringify(config),
@@ -838,14 +838,14 @@ export const api = {
       },
 
       getSchedule: async (token: string): Promise<CronJobSchedule> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/schedule`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/schedule`, {
           headers: getAuthHeaders(token),
         });
         return handleResponse<CronJobSchedule>(response);
       },
 
       updateSchedule: async (token: string, schedule: CronJobSchedule): Promise<CronJobSchedule> => {
-        const response = await fetch(`${API_BASE_URL}/automation/cron/schedule`, {
+        const response = await fetch(`${API_BASE_URL}/api/automation/cron/schedule`, {
           method: "PUT",
           headers: getAuthHeaders(token),
           body: JSON.stringify(schedule),
