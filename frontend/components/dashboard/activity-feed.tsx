@@ -77,10 +77,10 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
     return (
       <div className="border border-border bg-card p-8 text-center">
         <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-4" aria-hidden="true" />
-        <p className="font-display text-lg font-medium text-foreground">
+        <p className="font-semibold text-lg text-foreground">
           No activity yet
         </p>
-        <p className="font-body text-sm text-muted-foreground mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           Start by uploading a document or adding content.
         </p>
       </div>
@@ -92,7 +92,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
       {/* Header */}
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
         <div>
-          <h3 className="font-display text-lg font-medium">Recent Activity</h3>
+          <h3 className="font-semibold text-lg">Recent Activity</h3>
         </div>
         <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           {items.length} item{items.length !== 1 ? "s" : ""}
@@ -122,7 +122,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className="font-body text-sm font-medium truncate group-hover:text-primary transition-colors">
+                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                   {item.title}
                 </p>
               </div>

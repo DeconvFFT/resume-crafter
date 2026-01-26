@@ -252,7 +252,7 @@ export default function SkillsPage() {
                       className="flex items-center gap-1 px-3 py-1.5 bg-muted text-foreground border border-border rounded-full group hover:border-foreground transition-colors"
                     >
                       {skill.is_highlighted && (
-                        <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                        <Star className="h-3 w-3 text-warning fill-warning" />
                       )}
                       <span className="text-sm">{skill.name}</span>
                       {skill.proficiency && (
@@ -280,10 +280,10 @@ export default function SkillsPage() {
                         </button>
                         <button
                           onClick={() => deleteMutation.mutate(skill.id)}
-                          className="p-0.5 hover:bg-red-500/10 rounded"
+                          className="p-0.5 hover:bg-destructive/10 rounded"
                           title="Delete skill"
                         >
-                          <Trash2 className="h-3 w-3 text-red-500" />
+                          <Trash2 className="h-3 w-3 text-destructive" />
                         </button>
                       </div>
                     </div>

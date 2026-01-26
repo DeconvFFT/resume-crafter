@@ -4,32 +4,29 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  // Editorial badge - mono font, uppercase, bordered style
-  "inline-flex items-center border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  // Modern SaaS badge - rounded pill style
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
-        // Default - ink border
+        // Default - primary color fill
         default:
-          "border-foreground text-foreground",
-        // Secondary - muted border
+          "border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary/80",
+        // Secondary - subtle background
         secondary:
-          "border-muted-foreground/50 text-muted-foreground",
-        // Success - forest green
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        // Success - uses CSS variable
         success:
-          "border-success text-success",
-        // Warning - amber
+          "border-transparent bg-success/10 text-success",
+        // Warning - uses CSS variable
         warning:
-          "border-warning text-warning",
-        // Destructive - burgundy
+          "border-transparent bg-warning/10 text-warning",
+        // Destructive - red
         destructive:
-          "border-destructive text-destructive",
-        // Gold - champagne accent for premium
-        gold:
-          "border-accent text-accent",
-        // Outline - subtle
+          "border-transparent bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80",
+        // Outline - border only
         outline:
-          "border-border text-muted-foreground",
+          "text-foreground",
       },
     },
     defaultVariants: {

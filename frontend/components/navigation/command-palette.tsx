@@ -222,7 +222,7 @@ export function CommandPalette() {
       {/* Trigger Button - Editorial style */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 font-body text-sm text-muted-foreground hover:text-foreground border border-border hover:border-foreground transition-all"
+        className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border hover:border-foreground transition-all"
         aria-label="Open command palette"
       >
         <Search className="h-4 w-4" />
@@ -257,7 +257,7 @@ export function CommandPalette() {
                   setQuery(e.target.value);
                   setSelectedIndex(0);
                 }}
-                className="flex-1 bg-transparent font-body text-base outline-none placeholder:italic placeholder:text-muted-foreground/60"
+                className="flex-1 bg-transparent text-base outline-none placeholder:italic placeholder:text-muted-foreground/60"
                 aria-label="Search commands"
               />
               <kbd className="px-2 py-1 font-mono text-2xs text-muted-foreground border border-border">
@@ -269,7 +269,7 @@ export function CommandPalette() {
             <div className="max-h-[320px] overflow-y-auto py-4">
               {flatCommands.length === 0 ? (
                 <div className="px-6 py-10 text-center">
-                  <p className="font-body text-sm text-muted-foreground italic">
+                  <p className="text-sm text-muted-foreground">
                     No results found.
                   </p>
                 </div>
@@ -311,13 +311,13 @@ export function CommandPalette() {
                             </span>
                             <div className="flex-1 min-w-0">
                               <div className={cn(
-                                "font-body text-sm",
+                                "text-sm",
                                 isSelected ? "font-semibold text-foreground" : "text-foreground"
                               )}>
                                 {cmd.label}
                               </div>
                               {cmd.description && (
-                                <div className="font-body text-xs text-muted-foreground">
+                                <div className="text-xs text-muted-foreground">
                                   {cmd.description}
                                 </div>
                               )}

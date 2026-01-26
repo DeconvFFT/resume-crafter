@@ -21,7 +21,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-foreground/60 backdrop-blur-sm",
+      "fixed inset-0 z-50 bg-black/80",
       "data-[state=open]:animate-in data-[state=closed]:animate-out",
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
@@ -40,9 +40,9 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        // Editorial dialog - sharp corners, warm surface, corner marks
+        // Modern SaaS dialog - rounded corners, clean shadow
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
-        "gap-6 border border-border bg-background p-8 shadow-floating",
+        "gap-4 rounded-lg border bg-background p-6 shadow-lg",
         "duration-200",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -53,22 +53,18 @@ const DialogContent = React.forwardRef<
       )}
       {...props}
     >
-      {/* Decorative corner marks */}
-      <div className="absolute -top-2 -left-2 w-4 h-4 border-l-2 border-t-2 border-foreground" aria-hidden="true" />
-      <div className="absolute -bottom-2 -right-2 w-4 h-4 border-r-2 border-b-2 border-foreground" aria-hidden="true" />
-
       {children}
 
       <DialogPrimitive.Close
         className={cn(
-          "absolute right-6 top-6",
-          "opacity-70 transition-opacity hover:opacity-100",
-          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-          "disabled:pointer-events-none"
+          "absolute right-4 top-4 rounded-sm",
+          "opacity-70 ring-offset-background transition-opacity hover:opacity-100",
+          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
         )}
         aria-label="Close dialog"
       >
-        <X className="h-5 w-5" />
+        <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -82,7 +78,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-3",
+      "flex flex-col space-y-1.5 text-center sm:text-left",
       className
     )}
     {...props}
@@ -96,7 +92,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse gap-3 pt-4 border-t border-border sm:flex-row sm:justify-end",
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
       className
     )}
     {...props}
@@ -107,21 +103,15 @@ DialogFooter.displayName = "DialogFooter"
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, children, ...props }, ref) => (
-  <div>
-    <DialogPrimitive.Title
-      ref={ref}
-      className={cn(
-        "font-display text-2xl font-medium leading-tight tracking-tight",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </DialogPrimitive.Title>
-    {/* Editorial rule under title */}
-    <div className="mt-3 h-1 w-10 bg-foreground" aria-hidden="true" />
-  </div>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      "text-lg font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
 ))
 DialogTitle.displayName = DialogPrimitive.Title.displayName
 
@@ -131,7 +121,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("font-body text-sm text-muted-foreground mt-2", className)}
+    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ))

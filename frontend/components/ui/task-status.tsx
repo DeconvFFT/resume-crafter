@@ -17,11 +17,11 @@ interface TaskStatusProps {
   className?: string;
 }
 
-const statusConfig: Record<TaskStatus, { icon: typeof Clock; color: string; label: string }> = {
-  pending: { icon: Clock, color: "text-yellow-500", label: "Pending" },
-  processing: { icon: Loader2, color: "text-blue-500", label: "Processing" },
-  completed: { icon: CheckCircle, color: "text-green-500", label: "Completed" },
-  failed: { icon: AlertCircle, color: "text-red-500", label: "Failed" },
+const statusConfig: Record<TaskStatus, { icon: typeof Clock; color: string; bgColor: string; label: string }> = {
+  pending: { icon: Clock, color: "text-warning", bgColor: "bg-warning/10", label: "Pending" },
+  processing: { icon: Loader2, color: "text-primary", bgColor: "bg-primary/10", label: "Processing" },
+  completed: { icon: CheckCircle, color: "text-success", bgColor: "bg-success/10", label: "Completed" },
+  failed: { icon: AlertCircle, color: "text-destructive", bgColor: "bg-destructive/10", label: "Failed" },
 };
 
 export function TaskStatus({
@@ -66,16 +66,20 @@ export function TaskStatus({
   const Icon = config.icon;
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn(
+      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+      config.bgColor,
+      className
+    )}>
       <Icon
         className={cn(
-          "h-4 w-4",
+          "h-3.5 w-3.5",
           config.color,
           status === "processing" && "animate-spin"
         )}
       />
       {showLabel && (
-        <span className={cn("text-sm", config.color)}>{config.label}</span>
+        <span className={cn("text-sm font-medium", config.color)}>{config.label}</span>
       )}
     </div>
   );
@@ -128,7 +132,7 @@ export function TaskProgress({
   const progress = task.progress || 0;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Icon
@@ -141,21 +145,21 @@ export function TaskProgress({
           <span className="text-sm font-medium">{title || config.label}</span>
         </div>
         {status === "processing" && (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             {Math.round(progress * 100)}%
           </span>
         )}
       </div>
       {status === "processing" && (
-        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+        <div className="h-2 w-full rounded-full bg-primary/20 overflow-hidden">
           <div
-            className="h-full bg-primary transition-all duration-300"
+            className="h-full rounded-full bg-primary transition-all duration-300"
             style={{ width: `${progress * 100}%` }}
           />
         </div>
       )}
       {status === "failed" && task.error_message && (
-        <p className="text-sm text-red-500">{task.error_message}</p>
+        <p className="text-sm text-destructive">{task.error_message}</p>
       )}
     </div>
   );

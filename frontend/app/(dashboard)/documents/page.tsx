@@ -130,7 +130,7 @@ function ProcessingStream({
             {isThinking && <Sparkles className="h-3 w-3 text-primary animate-pulse" aria-hidden="true" />}
           </div>
           <div className="pl-6 border-l-2 border-primary/30">
-            <p className="font-body text-xs text-charcoal whitespace-pre-wrap max-h-40 overflow-y-auto">
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">
               {thinking || "Processing..."}
             </p>
           </div>
@@ -147,7 +147,7 @@ function ProcessingStream({
               </span>
               <span
                 className={cn(
-                  "font-body text-xs",
+                  "text-xs",
                   log.status === "completed" && "text-success",
                   log.status === "failed" && "text-destructive",
                   log.status === "started" && "text-info",
@@ -332,7 +332,7 @@ export default function DocumentsPage() {
               <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Method 01
               </span>
-              <h3 className="font-display text-lg font-medium mt-1">
+              <h3 className="font-semibold text-lg mt-1">
                 File Upload
               </h3>
             </div>
@@ -358,21 +358,21 @@ export default function DocumentsPage() {
             {isDragActive ? (
               <>
                 <FileText className="h-8 w-8 mx-auto mb-4 text-primary" aria-hidden="true" />
-                <p className="font-body text-sm text-primary font-medium">
+                <p className="text-sm text-primary font-medium">
                   Drop to upload
                 </p>
               </>
             ) : isUploading ? (
               <>
                 <Loader2 className="h-8 w-8 mx-auto mb-4 text-muted-foreground animate-spin" aria-hidden="true" />
-                <p className="font-body text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Uploading...
                 </p>
               </>
             ) : (
               <>
                 <FileText className="h-8 w-8 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
-                <p className="font-body text-sm">
+                <p className="text-sm">
                   Drag & drop or{" "}
                   <span className="text-primary font-medium">browse</span>
                 </p>
@@ -391,7 +391,7 @@ export default function DocumentsPage() {
               <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Method 02
               </span>
-              <h3 className="font-display text-lg font-medium mt-1">
+              <h3 className="font-semibold text-lg mt-1">
                 Google Docs
               </h3>
             </div>
@@ -425,7 +425,7 @@ export default function DocumentsPage() {
               )}
             </Button>
 
-            <p className="font-body text-xs text-muted-foreground italic">
+            <p className="text-xs text-muted-foreground">
               Document must be shared with &quot;Anyone with the link&quot;
             </p>
           </div>
@@ -436,7 +436,7 @@ export default function DocumentsPage() {
       <section>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-display text-xl font-medium">Your Documents</h2>
+            <h2 className="font-semibold text-xl">Your Documents</h2>
             <div className="h-1 w-10 bg-foreground mt-3" aria-hidden="true" />
           </div>
           <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
@@ -447,15 +447,15 @@ export default function DocumentsPage() {
         {isLoading ? (
           <div className="border border-border bg-card p-12 text-center">
             <Loader2 className="h-6 w-6 mx-auto mb-4 text-muted-foreground animate-spin" aria-hidden="true" />
-            <p className="font-body text-sm text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground">
               Loading documents...
             </p>
           </div>
         ) : documents.length === 0 ? (
           <div className="border border-border bg-card p-12 text-center">
             <FileText className="h-8 w-8 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
-            <p className="font-display text-lg font-medium">No documents yet</p>
-            <p className="font-body text-sm text-muted-foreground mt-2 italic">
+            <p className="font-semibold text-lg">No documents yet</p>
+            <p className="text-sm text-muted-foreground mt-2">
               Upload your first document above to get started.
             </p>
           </div>
@@ -481,7 +481,7 @@ export default function DocumentsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-body text-base font-medium truncate group-hover:text-primary transition-colors">
+                        <h3 className="text-base font-medium truncate group-hover:text-primary transition-colors">
                           {doc.filename}
                         </h3>
 
@@ -491,7 +491,7 @@ export default function DocumentsPage() {
                             <span className="font-mono text-2xs uppercase tracking-widest text-muted-foreground">
                               Classification
                             </span>
-                            <span className="font-body text-sm text-primary font-medium">
+                            <span className="text-sm text-primary font-medium">
                               {getDocumentClassLabel(doc.document_class)}
                             </span>
                             {doc.classification_confidence && (
@@ -503,7 +503,7 @@ export default function DocumentsPage() {
                         )}
 
                         {doc.classification_reasoning && (
-                          <p className="mt-2 font-body text-xs text-muted-foreground italic line-clamp-2">
+                          <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
                             {doc.classification_reasoning}
                           </p>
                         )}
@@ -536,7 +536,7 @@ export default function DocumentsPage() {
                                     </span>
                                     <span
                                       className={cn(
-                                        "font-body text-xs",
+                                        "text-xs",
                                         log.status === "completed" && "text-success",
                                         log.status === "failed" && "text-destructive",
                                         log.status === "processing" && "text-info",
@@ -554,7 +554,7 @@ export default function DocumentsPage() {
 
                         {doc.processing_status === "failed" && doc.processing_error && (
                           <div className="mt-3 p-3 border-2 border-destructive bg-destructive/5">
-                            <p className="font-body text-xs text-destructive">
+                            <p className="text-xs text-destructive">
                               {doc.processing_error.slice(0, 150)}...
                             </p>
                           </div>

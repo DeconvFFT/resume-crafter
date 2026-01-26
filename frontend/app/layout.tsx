@@ -1,30 +1,19 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Source_Serif_4, IBM_Plex_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Toaster } from "sonner";
 
-// Editorial typography - Display font for headings
-const playfair = Playfair_Display({
+// Modern SaaS typography - Primary sans-serif font
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-display",
+  variable: "--font-sans",
   display: "swap",
 });
 
-// Editorial typography - Body font
-const sourceSerif = Source_Serif_4({
+// Monospace font for code elements
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-body",
-  display: "swap",
-});
-
-// Editorial typography - Monospace for technical elements
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
   variable: "--font-mono",
   display: "swap",
 });
@@ -42,9 +31,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${sourceSerif.variable} ${ibmPlexMono.variable}`}
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
     >
-      <body className="font-body antialiased">
+      <body className="font-sans antialiased">
         <Providers>
           {children}
           <Toaster
@@ -52,7 +42,7 @@ export default function RootLayout({
             richColors
             toastOptions={{
               style: {
-                fontFamily: "var(--font-body)",
+                fontFamily: "var(--font-sans)",
               },
             }}
           />

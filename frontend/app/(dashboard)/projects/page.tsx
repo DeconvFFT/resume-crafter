@@ -267,9 +267,9 @@ export default function ProjectsPage() {
 
     if (status.status === "completed") {
       return (
-        <div className="mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-          <span className="text-sm text-green-600">
+        <div className="mt-3 p-2 bg-success/10 border border-success/20 rounded-lg flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-success" />
+          <span className="text-sm text-success">
             GitHub analysis complete
           </span>
         </div>
@@ -278,8 +278,8 @@ export default function ProjectsPage() {
 
     if (status.status === "failed") {
       return (
-        <div className="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-sm text-red-600">
+        <div className="mt-3 p-2 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <p className="text-sm text-destructive">
             Analysis failed: {status.error_message || "Unknown error"}
           </p>
         </div>
@@ -450,7 +450,7 @@ export default function ProjectsPage() {
                     )}
                     <button
                       onClick={() => deleteMutation.mutate(project.id)}
-                      className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
+                      className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

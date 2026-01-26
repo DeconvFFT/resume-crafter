@@ -75,7 +75,7 @@ export function WorkflowStepper(props: WorkflowStepperProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h3 className="font-display text-xl font-medium">Workflow</h3>
+          <h3 className="font-semibold text-xl">Workflow</h3>
           <div className="w-10 h-1 bg-foreground mt-3" aria-hidden="true" />
         </div>
         <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
@@ -127,7 +127,7 @@ export function WorkflowStepper(props: WorkflowStepperProps) {
                   {complete ? (
                     <Check className="h-5 w-5" aria-label="Completed" />
                   ) : (
-                    <span className="font-display text-lg font-medium">
+                    <span className="font-semibold text-lg">
                       {step.number}
                     </span>
                   )}
@@ -157,8 +157,8 @@ export function WorkflowStepper(props: WorkflowStepperProps) {
                   </div>
                   <p
                     className={cn(
-                      "font-body text-sm mt-1 transition-colors",
-                      complete || active ? "text-charcoal" : "text-muted-foreground"
+                      "text-sm mt-1 transition-colors",
+                      complete || active ? "text-muted-foreground" : "text-muted-foreground"
                     )}
                   >
                     {step.description}
@@ -192,7 +192,7 @@ export function WorkflowStepper(props: WorkflowStepperProps) {
               <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Next step
               </span>
-              <p className="font-body text-sm font-medium text-foreground">
+              <p className="text-sm font-medium text-foreground">
                 {activeStep.description}
               </p>
             </div>

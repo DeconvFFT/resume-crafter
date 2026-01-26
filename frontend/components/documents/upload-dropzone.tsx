@@ -160,17 +160,17 @@ export function UploadDropzone({ onUpload, isDisabled }: UploadDropzoneProps) {
         {/* Text */}
         {isDragActive ? (
           isDragAccept ? (
-            <p className="font-body text-sm text-primary font-medium">
+            <p className="text-sm text-primary font-medium">
               Drop to upload
             </p>
           ) : (
-            <p className="font-body text-sm text-destructive font-medium">
+            <p className="text-sm text-destructive font-medium">
               File type not supported
             </p>
           )
         ) : (
           <>
-            <p className="font-body text-sm">
+            <p className="text-sm">
               Drag & drop files here, or{" "}
               <span className="text-primary font-medium">browse</span>
             </p>
@@ -223,7 +223,7 @@ export function UploadDropzone({ onUpload, isDisabled }: UploadDropzoneProps) {
 
               {/* File Info */}
               <div className="flex-1 min-w-0">
-                <p className="font-body text-sm font-medium truncate">
+                <p className="text-sm font-medium truncate">
                   {file.file.name}
                 </p>
                 <div className="flex items-center gap-3 mt-1">

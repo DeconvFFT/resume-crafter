@@ -42,7 +42,7 @@ export default function RegisterPage() {
           {/* Logo */}
           <div>
             <Link href="/" className="inline-block">
-              <span className="font-display text-2xl tracking-wide">
+              <span className="font-semibold text-2xl tracking-wide">
                 Resume Crafter
               </span>
             </Link>
@@ -53,7 +53,7 @@ export default function RegisterPage() {
             <span className="font-mono text-xs uppercase tracking-widest text-background/50">
               What you&apos;ll get
             </span>
-            <h2 className="font-display text-3xl mt-4 mb-8">
+            <h2 className="font-semibold text-3xl mt-4 mb-8">
               Everything you need to land your next role
             </h2>
             <div className="h-1 w-16 bg-background/30 mb-8" aria-hidden="true" />
@@ -69,7 +69,7 @@ export default function RegisterPage() {
                   <span className="flex items-center justify-center w-5 h-5 border border-background/30 mt-0.5">
                     <Check className="h-3 w-3" aria-hidden="true" />
                   </span>
-                  <span className="font-body text-sm text-background/80">
+                  <span className="text-sm text-background/80">
                     {feature}
                   </span>
                 </li>
@@ -95,7 +95,7 @@ export default function RegisterPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-12">
             <Link href="/" className="inline-block">
-              <span className="font-display text-2xl tracking-wide">
+              <span className="font-semibold text-2xl tracking-wide">
                 Resume Crafter
               </span>
             </Link>
@@ -106,7 +106,7 @@ export default function RegisterPage() {
             <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
               Get started
             </span>
-            <h1 className="font-display text-4xl font-medium mt-2">
+            <h1 className="font-semibold text-4xl mt-2">
               Create account
             </h1>
             <div className="mt-4 h-1 w-12 bg-foreground" aria-hidden="true" />
@@ -125,7 +125,7 @@ export default function RegisterPage() {
                 autoComplete="name"
                 aria-describedby="fullName-description"
               />
-              <p id="fullName-description" className="font-body text-xs text-muted-foreground italic">
+              <p id="fullName-description" className="text-xs text-muted-foreground">
                 Optional - used for your resume
               </p>
             </div>
@@ -171,7 +171,7 @@ export default function RegisterPage() {
                   ].map((req, index) => (
                     <div
                       key={index}
-                      className={`flex items-center gap-2 font-body text-xs ${
+                      className={`flex items-center gap-2 text-xs ${
                         req.met ? "text-success" : "text-muted-foreground"
                       }`}
                     >
@@ -210,7 +210,7 @@ export default function RegisterPage() {
           {/* Error Display */}
           {register.isError && (
             <div className="mt-6 p-4 border-2 border-destructive bg-destructive/5">
-              <p className="font-body text-sm text-destructive">
+              <p className="text-sm text-destructive">
                 {(register.error as Error)?.message || "Failed to create account. Please try again."}
               </p>
             </div>
@@ -218,7 +218,7 @@ export default function RegisterPage() {
 
           {/* Divider */}
           <div className="mt-10 pt-8 border-t border-border">
-            <p className="font-body text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link
                 href="/login"
@@ -231,7 +231,7 @@ export default function RegisterPage() {
 
           {/* Terms */}
           <div className="mt-8">
-            <p className="font-body text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               By creating an account, you agree to our{" "}
               <Link href="/terms" className="underline underline-offset-2 hover:text-foreground transition-colors">
                 Terms of Service

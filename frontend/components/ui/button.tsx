@@ -4,34 +4,34 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap font-body text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-sans text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        // Primary - Terracotta red, uppercase, editorial style
+        // Primary - Indigo, modern SaaS style
         default:
-          "bg-primary text-primary-foreground uppercase tracking-wider hover:-translate-y-px hover:shadow-elevated active:translate-y-0",
-        // Destructive - Burgundy
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
+        // Destructive - Red
         destructive:
-          "bg-destructive text-destructive-foreground uppercase tracking-wider hover:-translate-y-px hover:shadow-elevated active:translate-y-0",
-        // Outline - Black border, inverts on hover
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        // Outline - Border with hover background
         outline:
-          "border-2 border-foreground bg-transparent text-foreground uppercase tracking-wider hover:bg-foreground hover:text-background",
-        // Secondary - Subtle, card background
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+        // Secondary - Subtle background
         secondary:
-          "bg-card text-card-foreground border border-border hover:border-foreground",
-        // Ghost - Minimal, underline style
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        // Ghost - Minimal, no background
         ghost:
-          "text-foreground hover:text-primary underline-offset-4 hover:underline",
-        // Link - Editorial underline animation
+          "hover:bg-accent hover:text-accent-foreground",
+        // Link - Underline on hover
         link:
-          "text-primary relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full",
+          "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-11 px-7 py-3",
-        sm: "h-9 px-4 py-2 text-xs",
-        lg: "h-12 px-10 py-4 text-base",
-        icon: "h-10 w-10",
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-10 rounded-md px-8",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {

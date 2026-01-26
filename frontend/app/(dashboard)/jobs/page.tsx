@@ -85,7 +85,7 @@ export default function JobsPage() {
               <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Method 01
               </span>
-              <h3 className="font-display text-lg font-medium mt-1">
+              <h3 className="font-semibold text-lg mt-1">
                 Job URL
               </h3>
             </div>
@@ -103,7 +103,7 @@ export default function JobsPage() {
                 onChange={(e) => setJobUrl(e.target.value)}
               />
             </div>
-            <p className="font-body text-xs text-muted-foreground italic">
+            <p className="text-xs text-muted-foreground">
               Works with LinkedIn, Indeed, and most job boards
             </p>
           </div>
@@ -116,7 +116,7 @@ export default function JobsPage() {
               <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
                 Method 02
               </span>
-              <h3 className="font-display text-lg font-medium mt-1">
+              <h3 className="font-semibold text-lg mt-1">
                 Job Description
               </h3>
             </div>
@@ -167,7 +167,7 @@ export default function JobsPage() {
       <section>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-display text-xl font-medium">Analyzed Jobs</h2>
+            <h2 className="font-semibold text-xl">Analyzed Jobs</h2>
             <div className="h-1 w-10 bg-foreground mt-3" aria-hidden="true" />
           </div>
           <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
@@ -178,15 +178,15 @@ export default function JobsPage() {
         {isLoading ? (
           <div className="border border-border bg-card p-12 text-center">
             <Loader2 className="h-6 w-6 mx-auto mb-4 text-muted-foreground animate-spin" aria-hidden="true" />
-            <p className="font-body text-sm text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground">
               Loading jobs...
             </p>
           </div>
         ) : jobs.length === 0 ? (
           <div className="border border-border bg-card p-12 text-center">
             <Target className="h-8 w-8 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
-            <p className="font-display text-lg font-medium">No jobs analyzed yet</p>
-            <p className="font-body text-sm text-muted-foreground mt-2 italic">
+            <p className="font-semibold text-lg">No jobs analyzed yet</p>
+            <p className="text-sm text-muted-foreground mt-2">
               Add a job posting above to analyze its requirements.
             </p>
           </div>
@@ -213,10 +213,10 @@ export default function JobsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-display text-lg font-medium truncate group-hover:text-primary transition-colors">
+                          <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                             {job.role || "Untitled Position"}
                             {job.company && (
-                              <span className="font-body text-base font-normal text-charcoal ml-2">
+                              <span className="text-base font-normal text-muted-foreground ml-2">
                                 at {job.company}
                               </span>
                             )}
@@ -242,7 +242,7 @@ export default function JobsPage() {
                                   <span className="font-mono text-2xs text-muted-foreground w-4 flex-shrink-0">
                                     {String(idx + 1).padStart(2, "0")}
                                   </span>
-                                  <p className="font-body text-sm text-charcoal">
+                                  <p className="text-sm text-muted-foreground">
                                     {req.content}
                                   </p>
                                 </div>

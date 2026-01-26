@@ -38,9 +38,9 @@ export function Breadcrumbs() {
           <span className="font-mono text-xs text-primary uppercase tracking-widest">
             00
           </span>
-          <h1 className="font-display text-2xl font-medium">Dashboard</h1>
+          <h1 className="font-semibold text-2xl">Dashboard</h1>
         </div>
-        <p className="font-body text-sm text-muted-foreground italic pl-8">
+        <p className="text-sm text-muted-foreground pl-8">
           {routeDescriptions[""]}
         </p>
       </nav>
@@ -54,7 +54,7 @@ export function Breadcrumbs() {
   return (
     <nav className="flex flex-col gap-2" aria-label="Breadcrumb">
       {/* Breadcrumb trail */}
-      <div className="flex items-center gap-2 font-body text-sm">
+      <div className="flex items-center gap-2 text-sm">
         <Link
           href="/"
           className="text-muted-foreground hover:text-foreground transition-colors"
@@ -90,12 +90,11 @@ export function Breadcrumbs() {
 
       {/* Page title with editorial rule */}
       <div className="mt-2">
-        <h1 className="font-display text-3xl font-medium tracking-tight">
+        <h1 className="font-semibold text-3xl tracking-tight">
           {currentLabel}
         </h1>
-        <div className="editorial-rule" aria-hidden="true" />
         {currentDescription && (
-          <p className="font-body text-base text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {currentDescription}
           </p>
         )}

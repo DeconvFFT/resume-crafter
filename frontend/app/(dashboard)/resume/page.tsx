@@ -103,7 +103,7 @@ export default function ResumePage() {
             <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
               Step 01
             </span>
-            <h2 className="font-display text-xl font-medium mt-1">
+            <h2 className="font-semibold text-xl mt-1">
               Select Target Job
             </h2>
             <div className="h-1 w-10 bg-foreground mt-3" aria-hidden="true" />
@@ -111,15 +111,15 @@ export default function ResumePage() {
           <Target className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
 
-        <p className="font-body text-sm text-muted-foreground mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           Choose a job to match your experience against and generate a tailored resume.
         </p>
 
         {completedJobs?.length === 0 ? (
           <div className="border-2 border-dashed border-border p-8 text-center">
             <Target className="h-8 w-8 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
-            <p className="font-display text-lg font-medium">No analyzed jobs available</p>
-            <p className="font-body text-sm text-muted-foreground mt-2 italic">
+            <p className="font-semibold text-lg">No analyzed jobs available</p>
+            <p className="text-sm text-muted-foreground mt-2">
               Add and analyze a job first to create matches.
             </p>
           </div>
@@ -168,12 +168,12 @@ export default function ResumePage() {
                   {/* Job info */}
                   <div className="flex-1 min-w-0">
                     <p className={cn(
-                      "font-body text-sm font-medium truncate transition-colors",
+                      "text-sm font-medium truncate transition-colors",
                       selectedJob === job.id ? "text-primary" : "group-hover:text-foreground"
                     )}>
                       {job.role || "Untitled"}
                       {job.company && (
-                        <span className="font-normal text-charcoal ml-2">
+                        <span className="font-normal text-muted-foreground ml-2">
                           at {job.company}
                         </span>
                       )}
@@ -211,7 +211,7 @@ export default function ResumePage() {
             <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
               Step 02
             </span>
-            <h2 className="font-display text-xl font-medium mt-1">
+            <h2 className="font-semibold text-xl mt-1">
               Your Resume Matches
             </h2>
             <div className="h-1 w-10 bg-foreground mt-3" aria-hidden="true" />
@@ -224,15 +224,15 @@ export default function ResumePage() {
         {matchesLoading ? (
           <div className="border border-border bg-card p-12 text-center">
             <Loader2 className="h-6 w-6 mx-auto mb-4 text-muted-foreground animate-spin" aria-hidden="true" />
-            <p className="font-body text-sm text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground">
               Loading matches...
             </p>
           </div>
         ) : matchList.length === 0 ? (
           <div className="border border-border bg-card p-12 text-center">
             <FileOutput className="h-8 w-8 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
-            <p className="font-display text-lg font-medium">No matches yet</p>
-            <p className="font-body text-sm text-muted-foreground mt-2 italic">
+            <p className="font-semibold text-lg">No matches yet</p>
+            <p className="text-sm text-muted-foreground mt-2">
               Select a job above to generate your first match.
             </p>
           </div>
@@ -258,10 +258,10 @@ export default function ResumePage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-display text-lg font-medium truncate group-hover:text-primary transition-colors">
+                            <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                               {match.job_role || "Match"}
                               {match.job_company && (
-                                <span className="font-body text-base font-normal text-charcoal ml-2">
+                                <span className="text-base font-normal text-muted-foreground ml-2">
                                   at {match.job_company}
                                 </span>
                               )}
@@ -300,7 +300,7 @@ export default function ResumePage() {
                           {/* Score Badge (for completed) */}
                           {isCompleted && (
                             <div className="flex flex-col items-center justify-center w-16 h-16 border-2 border-primary bg-primary/5 flex-shrink-0">
-                              <span className="font-display text-2xl font-bold text-primary">
+                              <span className="text-2xl font-bold text-primary">
                                 {Math.round(match.overall_match_score * 100)}
                               </span>
                               <span className="font-mono text-2xs text-muted-foreground uppercase">

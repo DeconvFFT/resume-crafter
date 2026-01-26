@@ -35,7 +35,7 @@ export default function LoginPage() {
           {/* Logo */}
           <div>
             <Link href="/" className="inline-block">
-              <span className="font-display text-2xl tracking-wide">
+              <span className="font-semibold text-2xl tracking-wide">
                 Resume Crafter
               </span>
             </Link>
@@ -43,11 +43,11 @@ export default function LoginPage() {
 
           {/* Quote */}
           <div className="max-w-md">
-            <blockquote className="font-display text-4xl leading-tight tracking-tight">
+            <blockquote className="font-semibold text-4xl leading-tight tracking-tight">
               &ldquo;Craft the story of your career with precision and purpose.&rdquo;
             </blockquote>
             <div className="mt-8 h-1 w-16 bg-background/30" aria-hidden="true" />
-            <p className="mt-6 font-body text-sm text-background/60 italic">
+            <p className="mt-6 text-sm text-background/60">
               Transform your experience into compelling narratives that resonate with employers.
             </p>
           </div>
@@ -70,7 +70,7 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-12">
             <Link href="/" className="inline-block">
-              <span className="font-display text-2xl tracking-wide">
+              <span className="font-semibold text-2xl tracking-wide">
                 Resume Crafter
               </span>
             </Link>
@@ -81,7 +81,7 @@ export default function LoginPage() {
             <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
               Welcome back
             </span>
-            <h1 className="font-display text-4xl font-medium mt-2">
+            <h1 className="font-semibold text-4xl mt-2">
               Sign in
             </h1>
             <div className="mt-4 h-1 w-12 bg-foreground" aria-hidden="true" />
@@ -134,7 +134,7 @@ export default function LoginPage() {
           {/* Error Display */}
           {login.isError && (
             <div className="mt-6 p-4 border-2 border-destructive bg-destructive/5">
-              <p className="font-body text-sm text-destructive">
+              <p className="text-sm text-destructive">
                 {(login.error as Error)?.message || "Invalid email or password. Please try again."}
               </p>
             </div>
@@ -142,7 +142,7 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="mt-10 pt-8 border-t border-border">
-            <p className="font-body text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link
                 href="/register"

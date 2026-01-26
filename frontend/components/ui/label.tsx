@@ -6,8 +6,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const labelVariants = cva(
-  // Editorial label - mono font, uppercase, tracked
-  "block font-mono text-xs uppercase tracking-widest text-muted-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  // Modern SaaS label - clean, medium weight
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 );
 
 const Label = React.forwardRef<

@@ -134,10 +134,10 @@ export function QuickActionsPanel(props: QuickActionsPanelProps) {
               <span className="font-mono text-xs uppercase tracking-widest text-primary">
                 Recommended
               </span>
-              <h3 className="font-display text-lg font-medium mt-1 group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-lg mt-1 group-hover:text-primary transition-colors">
                 {primaryAction.label}
               </h3>
-              <p className="font-body text-sm text-muted-foreground mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 {primaryAction.description}
               </p>
             </div>
@@ -166,7 +166,7 @@ export function QuickActionsPanel(props: QuickActionsPanelProps) {
                 <span className="text-muted-foreground group-hover:text-foreground transition-colors">
                   {action.icon}
                 </span>
-                <span className="font-body text-sm font-medium mt-3 group-hover:text-foreground transition-colors">
+                <span className="text-sm font-medium mt-3 group-hover:text-foreground transition-colors">
                   {action.label}
                 </span>
               </Link>
@@ -179,22 +179,22 @@ export function QuickActionsPanel(props: QuickActionsPanelProps) {
       {!primaryAction && secondaryActions.length === 0 && (
         <div className="border border-border bg-card p-8 text-center">
           <FileOutput className="h-8 w-8 mx-auto text-muted-foreground mb-4" aria-hidden="true" />
-          <p className="font-display text-lg font-medium">
+          <p className="font-semibold text-lg">
             All caught up
           </p>
-          <p className="font-body text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             Generate more resumes or update your content.
           </p>
           <div className="flex justify-center gap-6 mt-6">
             <Link
               href="/resume"
-              className="font-body text-sm text-primary hover:underline underline-offset-4"
+              className="text-sm text-primary hover:underline underline-offset-4"
             >
               Generate resume
             </Link>
             <Link
               href="/documents"
-              className="font-body text-sm text-muted-foreground hover:text-foreground"
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
               Manage documents
             </Link>

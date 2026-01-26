@@ -10,14 +10,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          // Editorial input - bottom border only, transparent bg
-          "flex h-11 w-full border-b-2 border-border bg-transparent px-0 py-3",
-          "font-body text-base text-foreground",
-          "transition-colors duration-200",
-          // Placeholder - italic style
-          "placeholder:italic placeholder:text-muted-foreground/60",
-          // Focus state - terracotta border
-          "focus:border-primary focus:outline-none",
+          // Modern SaaS input - rounded with border
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1",
+          "text-sm shadow-sm transition-colors",
+          // Placeholder style
+          "placeholder:text-muted-foreground",
+          // Focus state - ring style
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           // File input styling
           "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
           // Disabled state

@@ -10,14 +10,13 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          // Editorial textarea - bottom border style, matching input
-          "flex min-h-[120px] w-full border-b-2 border-border bg-transparent px-0 py-3",
-          "font-body text-base text-foreground",
-          "transition-colors duration-200 resize-y",
-          // Placeholder - italic style
-          "placeholder:italic placeholder:text-muted-foreground/60",
-          // Focus state - terracotta border
-          "focus:border-primary focus:outline-none",
+          // Modern SaaS textarea - rounded with border
+          "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2",
+          "text-sm shadow-sm transition-colors",
+          // Placeholder style
+          "placeholder:text-muted-foreground",
+          // Focus state - ring style
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           // Disabled state
           "disabled:cursor-not-allowed disabled:opacity-50",
           className

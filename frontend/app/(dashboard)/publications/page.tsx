@@ -357,7 +357,7 @@ export default function PublicationsPage() {
 
                   <button
                     onClick={() => deleteMutation.mutate(pub.id)}
-                    className="text-muted-foreground hover:text-red-500 transition-colors ml-4"
+                    className="text-muted-foreground hover:text-destructive transition-colors ml-4"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

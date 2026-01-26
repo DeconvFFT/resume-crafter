@@ -154,7 +154,7 @@ export function ProcessingPipeline({ status, logs = [], compact = false }: Proce
           <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
             Processing
           </span>
-          <h3 className="font-display text-lg font-medium mt-1">
+          <h3 className="font-semibold text-lg mt-1">
             Document Pipeline
           </h3>
         </div>
@@ -261,7 +261,7 @@ export function ProcessingPipeline({ status, logs = [], compact = false }: Proce
       {/* Current Action */}
       {status === "processing" && (
         <div className="mt-6 pt-6 border-t border-border">
-          <p className="font-body text-sm text-primary italic">
+          <p className="text-sm text-primary italic">
             {logs.length > 0
               ? logs[logs.length - 1].message
               : "Processing your document..."}
@@ -271,7 +271,7 @@ export function ProcessingPipeline({ status, logs = [], compact = false }: Proce
 
       {status === "failed" && (
         <div className="mt-6 p-4 border-2 border-destructive bg-destructive/5">
-          <p className="font-body text-sm text-destructive">
+          <p className="text-sm text-destructive">
             {logs.find((l) => l.status === "failed")?.message || "Processing failed"}
           </p>
         </div>
@@ -279,7 +279,7 @@ export function ProcessingPipeline({ status, logs = [], compact = false }: Proce
 
       {status === "completed" && (
         <div className="mt-6 pt-6 border-t border-border">
-          <p className="font-body text-sm text-success italic">
+          <p className="text-sm text-success italic">
             Document processed successfully
           </p>
         </div>
