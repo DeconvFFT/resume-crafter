@@ -8,8 +8,11 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy all application code
-COPY . .
+# Copy backend code from repo root context
+# Note: Railway builds from repo root, so we copy from backend/
+COPY backend/pyproject.toml backend/alembic.ini ./
+COPY backend/alembic ./alembic
+COPY backend/src ./src
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -e .
