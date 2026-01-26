@@ -62,16 +62,29 @@ def _get_channel_name(document_id: UUID | str) -> str:
 
 
 def _parse_redis_url() -> dict:
-    """Parse Redis URL into connection parameters."""
-    url = str(settings.redis_url)
-    # redis://localhost:6379/0
-    parts = url.replace("redis://", "").split("/")
-    host_port = parts[0].split(":")
-    host = host_port[0]
-    port = int(host_port[1]) if len(host_port) > 1 else 6379
-    database = int(parts[1]) if len(parts) > 1 else 0
+    """Parse Redis URL into connection parameters.
 
-    return {"host": host, "port": port, "db": database}
+    Handles formats:
+    - redis://localhost:6379/0
+    - redis://default:password@host:port/0
+    """
+    from urllib.parse import urlparse
+
+    url = str(settings.redis_url)
+    parsed = urlparse(url)
+
+    params = {
+        "host": parsed.hostname or "localhost",
+        "port": parsed.port or 6379,
+        "db": int(parsed.path.lstrip("/") or 0) if parsed.path else 0,
+    }
+
+    if parsed.password:
+        params["password"] = parsed.password
+    if parsed.username:
+        params["username"] = parsed.username
+
+    return params
 
 
 class PubSubService:
