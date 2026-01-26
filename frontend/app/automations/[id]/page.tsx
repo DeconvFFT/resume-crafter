@@ -24,6 +24,7 @@ import {
   ChevronUp,
   MoreVertical,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,6 +53,19 @@ import { useExecutionStream } from "@/hooks/useExecutionStream";
 import { useTriggerCronJob } from "@/hooks/useExecutions";
 import { useAuthStore } from "@/lib/stores/auth";
 import { api } from "@/lib/api/client";
+import {
+  sampleWorkflows,
+  getRecommendedSampleWorkflow,
+  type SampleWorkflow,
+} from "@/lib/sample-workflows";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // ============================================================================
 // Utility Functions
@@ -147,22 +161,9 @@ function campaignToWorkflowNodes(campaign: {
   return { nodes, edges };
 }
 
-// Default workflow for new campaigns
-const defaultWorkflow = {
-  nodes: [
-    {
-      id: "node-1",
-      type: "workflowNode",
-      position: { x: 100, y: 150 },
-      data: {
-        type: "trigger" as const,
-        title: "New Job Found",
-        description: "Triggers when a new job matches criteria",
-      },
-    },
-  ] as Node<WorkflowNodeData>[],
-  edges: [] as Edge[],
-};
+// Default workflow for new campaigns - uses the basic sample workflow
+// to help users understand how workflows work
+const defaultWorkflow = getRecommendedSampleWorkflow();
 
 // Map node category to WorkflowNodeData type
 const categoryToNodeType: Record<string, WorkflowNodeData["type"]> = {
@@ -261,9 +262,11 @@ export default function WorkflowBuilderPage() {
   // Load workflow data from API
   useEffect(() => {
     if (isNewWorkflow) {
+      // Load the recommended sample workflow for new users
+      // This helps them understand how workflows work
       setNodes(defaultWorkflow.nodes);
       setEdges(defaultWorkflow.edges);
-      setWorkflowName("Untitled Workflow");
+      setWorkflowName(defaultWorkflow.name);
     } else if (campaign) {
       // Convert campaign data to workflow visualization
       const { nodes: campaignNodes, edges: campaignEdges } = campaignToWorkflowNodes(campaign);
@@ -482,6 +485,14 @@ export default function WorkflowBuilderPage() {
     }
   }, [accessToken, isNewWorkflow, workflowName, nodes, edges, createCampaignMutation, router]);
 
+  // Handle loading a sample workflow
+  const handleLoadSampleWorkflow = useCallback((sample: SampleWorkflow) => {
+    setNodes(sample.nodes);
+    setEdges(sample.edges);
+    setWorkflowName(sample.name);
+    toast.success(`Loaded "${sample.name}" sample workflow`);
+  }, [setNodes, setEdges]);
+
   // Handle run workflow
   const handleRun = useCallback(async () => {
     if (!accessToken) {
@@ -684,6 +695,33 @@ export default function WorkflowBuilderPage() {
 
         {/* Right section */}
         <div className="flex items-center gap-2">
+          {/* Load Sample Workflow Dropdown */}
+          {isNewWorkflow && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Sparkles className="h-4 w-4" />
+                  Load Sample
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Sample Workflows</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {sampleWorkflows.map((sample) => (
+                  <DropdownMenuItem
+                    key={sample.id}
+                    onClick={() => handleLoadSampleWorkflow(sample)}
+                    className="flex flex-col items-start gap-1 cursor-pointer"
+                  >
+                    <span className="font-medium">{sample.name}</span>
+                    <span className="text-xs text-muted-foreground line-clamp-2">
+                      {sample.description}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button
             variant="outline"
             size="sm"
