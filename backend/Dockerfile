@@ -1,5 +1,7 @@
-# Cache bust: 2026-01-26
 FROM python:3.11-slim
+
+# Force rebuild - version 2
+ARG CACHE_BUST=2
 
 WORKDIR /app
 
@@ -9,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy all application code first (needed for editable install)
+# Copy all application code (needed for editable install)
 COPY . .
 
 # Install Python dependencies
