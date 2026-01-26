@@ -1,9 +1,50 @@
-backend/src/core/operouter*
-
-# Environment files with secrets
+# Environment files with secrets - NEVER COMMIT
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.env
 backend/.env
 frontend/.env
-__pycache__
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
+
+# API keys and secrets
+backend/src/core/operouter*
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Node
+node_modules/
+.next/
+out/
+.vercel
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build
+dist/
+build/
+*.egg-info/
