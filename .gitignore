@@ -6,3 +6,4 @@ backend/src/core/operouter*
 .env.*.local
 backend/.env
 frontend/.env
+__pycache__
