@@ -1,7 +1,11 @@
-"""Resume generation in multiple formats."""
+"""Resume generation in multiple formats.
+
+Supports both simple generation (direct database queries) and
+multi-agent optimized generation (CollectionAgent -> MappingAgent -> ResumeBuilderAgent).
+"""
 
 import logging
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from sqlalchemy import select
@@ -10,9 +14,13 @@ from sqlalchemy.orm import selectinload
 
 from src.models.database import (
     Experience,
+    ExperienceBullet,
     Project,
+    ProjectBullet,
+    Publication,
     ResumeMatch,
     ResumeMatchItem,
+    Skill,
     User,
 )
 
@@ -36,92 +44,132 @@ class ResumeGenerator:
             user: User profile.
 
         Returns:
-            JSON-serializable resume dict.
+            JSON-serializable resume dict with ALL user data.
         """
-        # Get included items with their bullets
+        # Get included items for tracking which bullets are matched
         included_items = [item for item in match.items if item.included_in_resume]
 
-        # Group by experience/project
-        experience_bullets = {}
-        project_bullets = {}
+        # Build sets of matched bullet IDs for highlighting
+        matched_exp_bullet_ids = {
+            item.experience_bullet_id
+            for item in included_items
+            if item.experience_bullet_id
+        }
+        matched_proj_bullet_ids = {
+            item.project_bullet_id
+            for item in included_items
+            if item.project_bullet_id
+        }
 
-        for item in included_items:
-            if item.experience_bullet:
-                exp_id = item.experience_bullet.experience_id
-                if exp_id not in experience_bullets:
-                    experience_bullets[exp_id] = []
-                experience_bullets[exp_id].append(item.experience_bullet)
-            elif item.project_bullet:
-                proj_id = item.project_bullet.project_id
-                if proj_id not in project_bullets:
-                    project_bullets[proj_id] = []
-                project_bullets[proj_id].append(item.project_bullet)
+        # Fetch ALL user experiences with bullets
+        exp_result = await db.execute(
+            select(Experience)
+            .options(selectinload(Experience.bullets))
+            .where(
+                Experience.user_id == user.id,
+                Experience.deleted_at.is_(None),
+            )
+            .order_by(Experience.start_date.desc())
+        )
+        all_experiences = exp_result.scalars().all()
 
-        # Fetch full experience data
+        # Build experiences data with ALL bullets, marking matched ones
         experiences_data = []
-        if experience_bullets:
-            result = await db.execute(
-                select(Experience)
-                .where(Experience.id.in_(experience_bullets.keys()))
-                .order_by(Experience.start_date.desc())
-            )
-            for exp in result.scalars():
-                bullets = experience_bullets.get(exp.id, [])
-                experiences_data.append({
-                    "company": exp.company,
-                    "role": exp.role,
-                    "location": exp.location,
-                    "start_date": exp.start_date.isoformat() if exp.start_date else None,
-                    "end_date": exp.end_date.isoformat() if exp.end_date else None,
-                    "is_current": exp.is_current,
-                    "bullets": [
-                        {
-                            "content": b.content,
-                            "skills": b.skills,
-                            "metrics": b.metrics,
-                        }
-                        for b in sorted(bullets, key=lambda x: x.order_index)
-                    ],
+        for exp in all_experiences:
+            bullets_data = []
+            for bullet in sorted(exp.bullets, key=lambda x: x.order_index):
+                if bullet.deleted_at:
+                    continue
+                bullets_data.append({
+                    "content": bullet.content,
+                    "skills": bullet.skills,
+                    "metrics": bullet.metrics,
+                    "matched": bullet.id in matched_exp_bullet_ids,
                 })
 
-        # Fetch full project data
+            experiences_data.append({
+                "company": exp.company,
+                "role": exp.role,
+                "location": exp.location,
+                "start_date": exp.start_date.isoformat() if exp.start_date else None,
+                "end_date": exp.end_date.isoformat() if exp.end_date else None,
+                "is_current": exp.is_current,
+                "bullets": bullets_data,
+            })
+
+        # Fetch ALL user projects with bullets and links
+        proj_result = await db.execute(
+            select(Project)
+            .options(selectinload(Project.bullets), selectinload(Project.links))
+            .where(
+                Project.user_id == user.id,
+                Project.deleted_at.is_(None),
+            )
+            .order_by(Project.created_at.desc())
+        )
+        all_projects = proj_result.scalars().all()
+
+        # Build projects data with ALL bullets, marking matched ones
         projects_data = []
-        if project_bullets:
-            result = await db.execute(
-                select(Project)
-                .options(selectinload(Project.links))
-                .where(Project.id.in_(project_bullets.keys()))
-                .order_by(Project.created_at.desc())
-            )
-            for proj in result.scalars():
-                bullets = project_bullets.get(proj.id, [])
-                projects_data.append({
-                    "name": proj.name,
-                    "description": proj.description,
-                    "technologies": proj.technologies,
-                    "start_date": proj.start_date.isoformat() if proj.start_date else None,
-                    "end_date": proj.end_date.isoformat() if proj.end_date else None,
-                    "bullets": [
-                        {
-                            "content": b.content,
-                            "skills": b.skills,
-                            "metrics": b.metrics,
-                        }
-                        for b in sorted(bullets, key=lambda x: x.order_index)
-                    ],
-                    "links": [
-                        {"url": link.url, "type": link.link_type.value, "title": link.title}
-                        for link in proj.links
-                    ],
+        for proj in all_projects:
+            bullets_data = []
+            for bullet in sorted(proj.bullets, key=lambda x: x.order_index):
+                if bullet.deleted_at:
+                    continue
+                bullets_data.append({
+                    "content": bullet.content,
+                    "skills": bullet.skills,
+                    "metrics": bullet.metrics,
+                    "matched": bullet.id in matched_proj_bullet_ids,
                 })
 
-        # Collect all skills
-        all_skills = set()
-        for item in included_items:
-            if item.experience_bullet and item.experience_bullet.skills:
-                all_skills.update(item.experience_bullet.skills)
-            if item.project_bullet and item.project_bullet.skills:
-                all_skills.update(item.project_bullet.skills)
+            projects_data.append({
+                "name": proj.name,
+                "description": proj.description,
+                "technologies": proj.technologies,
+                "start_date": proj.start_date.isoformat() if proj.start_date else None,
+                "end_date": proj.end_date.isoformat() if proj.end_date else None,
+                "bullets": bullets_data,
+                "links": [
+                    {"url": link.url, "type": link.link_type.value, "title": link.title}
+                    for link in proj.links
+                ],
+            })
+
+        # Fetch ALL user skills from Skill table
+        skill_result = await db.execute(
+            select(Skill)
+            .where(
+                Skill.user_id == user.id,
+                Skill.deleted_at.is_(None),
+            )
+            .order_by(Skill.display_order)
+        )
+        user_skills = [s.name for s in skill_result.scalars().all()]
+
+        # Fetch ALL user publications
+        pub_result = await db.execute(
+            select(Publication)
+            .where(
+                Publication.user_id == user.id,
+                Publication.deleted_at.is_(None),
+            )
+            .order_by(Publication.display_order)
+        )
+        publications = pub_result.scalars().all()
+
+        # Build publications data
+        publications_data = []
+        for pub in publications:
+            publications_data.append({
+                "title": pub.title,
+                "authors": pub.authors,
+                "venue": pub.venue,
+                "publication_date": pub.publication_date.isoformat() if pub.publication_date else None,
+                "publication_type": pub.publication_type.value if pub.publication_type else None,
+                "doi": pub.doi,
+                "url": pub.url,
+            })
 
         return {
             "profile": {
@@ -145,7 +193,8 @@ class ResumeGenerator:
             },
             "experiences": experiences_data,
             "projects": projects_data,
-            "skills": sorted(all_skills),
+            "skills": user_skills,
+            "publications": publications_data,
         }
 
     async def generate_markdown(
@@ -258,6 +307,33 @@ class ResumeGenerator:
             lines.append(", ".join(json_data["skills"]))
             lines.append("")
 
+        # Publications
+        if json_data.get("publications"):
+            lines.append("## Publications")
+            lines.append("")
+            for pub in json_data["publications"]:
+                title = pub["title"]
+                venue = pub.get("venue", "")
+                date = pub.get("publication_date", "")
+                pub_type = pub.get("publication_type", "")
+                doi = pub.get("doi", "")
+                url = pub.get("url", "")
+
+                # Build publication entry
+                entry = f"**{title}**"
+                if venue:
+                    entry += f" - {venue}"
+                if date:
+                    entry += f" ({date})"
+                lines.append(f"- {entry}")
+
+                # Add DOI or URL if available
+                if doi:
+                    lines.append(f"  DOI: {doi}")
+                elif url:
+                    lines.append(f"  [{url}]({url})")
+            lines.append("")
+
         return "\n".join(lines)
 
     async def generate_google_doc(
@@ -267,7 +343,7 @@ class ResumeGenerator:
         user: User,
         credentials: dict[str, Any] | None = None,
     ) -> str | None:
-        """Generate resume as Google Doc.
+        """Generate resume as ATS-friendly Google Doc.
 
         Args:
             db: Database session.
@@ -285,10 +361,10 @@ class ResumeGenerator:
         try:
             from src.integrations.google_docs import GoogleDocsService
 
-            # Generate markdown content first
-            markdown_content = await self.generate_markdown(db, match, user)
+            # Generate JSON data for structured formatting
+            resume_data = await self.generate_json(db, match, user)
 
-            # Create Google Doc
+            # Create Google Doc with ATS-friendly formatting
             google_docs = GoogleDocsService(credentials=credentials)
             try:
                 # Create title from user name and target role
@@ -298,11 +374,11 @@ class ResumeGenerator:
                 if match.job and match.job.company:
                     title += f" at {match.job.company}"
 
-                doc_url = await google_docs.create_document(
+                doc_url = await google_docs.create_ats_resume(
                     title=title,
-                    content=markdown_content,
+                    resume_data=resume_data,
                 )
-                logger.info(f"Created Google Doc: {doc_url}")
+                logger.info(f"Created ATS-friendly Google Doc: {doc_url}")
                 return doc_url
 
             finally:
@@ -314,6 +390,104 @@ class ResumeGenerator:
         except Exception as e:
             logger.exception(f"Unexpected error creating Google Doc: {e}")
             return None
+
+    async def generate_optimized(
+        self,
+        db: AsyncSession,
+        match: ResumeMatch,
+        user: User,
+        llm_client: Any,
+        format: Literal["json", "markdown", "google_doc"] = "json",
+        template: Literal["standard", "technical", "academic"] = "standard",
+        max_experiences: int = 4,
+        max_projects: int = 3,
+        credentials: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Generate optimized resume using multi-agent system.
+
+        This method uses three specialized agents:
+        1. CollectionAgent - Gathers all user data
+        2. MappingAgent - Scores and maps content to job requirements
+        3. ResumeBuilderAgent - Creates ATS-friendly output
+
+        Args:
+            db: Database session.
+            match: Resume match with job context.
+            user: User profile.
+            llm_client: LLM client for agents.
+            format: Output format.
+            template: ATS template type.
+            max_experiences: Maximum experiences to include.
+            max_projects: Maximum projects to include.
+            credentials: Google OAuth2 credentials (for google_doc format).
+
+        Returns:
+            Dict with resume content and quality metrics.
+        """
+        from src.agents.resume_generation_supervisor import ResumeGenerationSupervisor
+        from src.models.schemas.resume_generation import ResumeGenerationOptions
+
+        logger.info(f"Starting multi-agent resume generation for user {user.id}")
+
+        # Create supervisor and options
+        supervisor = ResumeGenerationSupervisor(llm_client, db)
+        options = ResumeGenerationOptions(
+            format=format,
+            max_experiences=max_experiences,
+            max_projects=max_projects,
+            template=template,
+        )
+
+        # Generate using multi-agent pipeline
+        result = await supervisor.generate(user, match, options)
+
+        # Build response
+        response = {
+            "json_data": result.json_data,
+            "markdown": result.markdown,
+            "ats_score": result.ats_score,
+            "keyword_density": result.keyword_density,
+            "optimization_notes": [
+                {
+                    "category": note.category,
+                    "message": note.message,
+                    "severity": note.severity,
+                }
+                for note in result.optimization_notes
+            ],
+            "stats": {
+                "experiences_included": result.experiences_included,
+                "projects_included": result.projects_included,
+                "skills_included": result.skills_included,
+                "publications_included": result.publications_included,
+            },
+        }
+
+        # If Google Doc format, create the doc
+        if format == "google_doc" and credentials:
+            try:
+                from src.integrations.google_docs import GoogleDocsService
+
+                google_docs = GoogleDocsService(credentials=credentials)
+                try:
+                    title = f"Resume - {user.full_name or 'Untitled'}"
+                    if match.job and match.job.role:
+                        title += f" - {match.job.role}"
+
+                    doc_url = await google_docs.create_ats_resume(
+                        title=title,
+                        resume_data=result.json_data,
+                    )
+                    response["google_doc_url"] = doc_url
+                    logger.info(f"Created ATS-friendly Google Doc: {doc_url}")
+                finally:
+                    await google_docs.close()
+
+            except Exception as e:
+                logger.error(f"Google Doc creation failed: {e}")
+                response["google_doc_error"] = str(e)
+
+        return response
 
 
 # Singleton instance

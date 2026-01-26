@@ -113,6 +113,7 @@ class GeneratedResume(BaseModel):
     experiences: list[dict]
     projects: list[dict]
     skills: list[str]
+    publications: list[dict] = []
 
 
 class ResumeGenerateResponse(BaseModel):

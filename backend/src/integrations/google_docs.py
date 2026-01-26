@@ -168,6 +168,369 @@ class GoogleDocsService:
 
         return f"https://docs.google.com/document/d/{doc_id}/edit"
 
+    async def create_ats_resume(
+        self,
+        title: str,
+        resume_data: dict[str, Any],
+    ) -> str:
+        """Create an ATS-friendly formatted Google Doc resume.
+
+        Args:
+            title: The document title.
+            resume_data: Resume JSON data with profile, experiences, projects, skills, publications.
+
+        Returns:
+            The URL of the created document.
+        """
+        if not self.credentials or "access_token" not in self.credentials:
+            raise ValueError("OAuth2 credentials required to create documents")
+
+        client = await self._get_client()
+
+        # Create empty document
+        create_response = await client.post(
+            "https://docs.googleapis.com/v1/documents",
+            json={"title": title},
+        )
+        create_response.raise_for_status()
+        doc_data = create_response.json()
+        doc_id = doc_data["documentId"]
+
+        # Build requests for ATS-friendly formatting
+        requests = self._build_ats_resume_requests(resume_data)
+
+        if requests:
+            await client.post(
+                f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate",
+                json={"requests": requests},
+            )
+
+        return f"https://docs.google.com/document/d/{doc_id}/edit"
+
+    def _build_ats_resume_requests(self, data: dict[str, Any]) -> list[dict[str, Any]]:
+        """Build Google Docs API requests for ATS-friendly resume formatting.
+
+        ATS Best Practices:
+        - Simple, single-column layout
+        - Standard section headers
+        - No tables, graphics, or columns
+        - Clear hierarchy with consistent formatting
+        - Standard fonts (the doc will use default)
+        """
+        requests: list[dict[str, Any]] = []
+        index = 1  # Google Docs uses 1-based indexing
+
+        profile = data.get("profile", {})
+        experiences = data.get("experiences", [])
+        projects = data.get("projects", [])
+        skills = data.get("skills", [])
+        publications = data.get("publications", [])
+
+        # === NAME (Large, Bold, Centered) ===
+        name = profile.get("full_name") or "Resume"
+        requests.append({"insertText": {"location": {"index": index}, "text": f"{name}\n"}})
+        name_end = index + len(name)
+        requests.append({
+            "updateParagraphStyle": {
+                "range": {"startIndex": index, "endIndex": name_end + 1},
+                "paragraphStyle": {"alignment": "CENTER"},
+                "fields": "alignment",
+            }
+        })
+        requests.append({
+            "updateTextStyle": {
+                "range": {"startIndex": index, "endIndex": name_end},
+                "textStyle": {"bold": True, "fontSize": {"magnitude": 18, "unit": "PT"}},
+                "fields": "bold,fontSize",
+            }
+        })
+        index = name_end + 1
+
+        # === CONTACT INFO (Single line, centered) ===
+        contact_parts = []
+        if profile.get("email"):
+            contact_parts.append(profile["email"])
+        if profile.get("phone"):
+            contact_parts.append(profile["phone"])
+        if profile.get("location"):
+            contact_parts.append(profile["location"])
+        if profile.get("linkedin_url"):
+            contact_parts.append(profile["linkedin_url"])
+        if profile.get("websites"):
+            contact_parts.extend(profile["websites"][:2])  # Max 2 websites
+
+        if contact_parts:
+            contact_line = " | ".join(contact_parts) + "\n"
+            requests.append({"insertText": {"location": {"index": index}, "text": contact_line}})
+            contact_end = index + len(contact_line) - 1
+            requests.append({
+                "updateParagraphStyle": {
+                    "range": {"startIndex": index, "endIndex": contact_end + 1},
+                    "paragraphStyle": {"alignment": "CENTER"},
+                    "fields": "alignment",
+                }
+            })
+            requests.append({
+                "updateTextStyle": {
+                    "range": {"startIndex": index, "endIndex": contact_end},
+                    "textStyle": {"fontSize": {"magnitude": 10, "unit": "PT"}},
+                    "fields": "fontSize",
+                }
+            })
+            index += len(contact_line)
+
+        # Add spacing
+        requests.append({"insertText": {"location": {"index": index}, "text": "\n"}})
+        index += 1
+
+        # === SUMMARY (if present) ===
+        if profile.get("summary"):
+            index = self._add_section_header(requests, index, "SUMMARY")
+            summary_text = profile["summary"] + "\n\n"
+            requests.append({"insertText": {"location": {"index": index}, "text": summary_text}})
+            index += len(summary_text)
+
+        # === EXPERIENCE ===
+        if experiences:
+            index = self._add_section_header(requests, index, "EXPERIENCE")
+
+            for exp in experiences:
+                # Role at Company (Bold)
+                role_line = f"{exp.get('role', 'Role')} at {exp.get('company', 'Company')}\n"
+                requests.append({"insertText": {"location": {"index": index}, "text": role_line}})
+                role_end = index + len(role_line) - 1
+                requests.append({
+                    "updateTextStyle": {
+                        "range": {"startIndex": index, "endIndex": role_end},
+                        "textStyle": {"bold": True},
+                        "fields": "bold",
+                    }
+                })
+                index += len(role_line)
+
+                # Location | Dates (Italic)
+                meta_parts = []
+                if exp.get("location"):
+                    meta_parts.append(exp["location"])
+                date_str = self._format_date_range(
+                    exp.get("start_date"),
+                    exp.get("end_date"),
+                    exp.get("is_current", False)
+                )
+                if date_str:
+                    meta_parts.append(date_str)
+
+                if meta_parts:
+                    meta_line = " | ".join(meta_parts) + "\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": meta_line}})
+                    meta_end = index + len(meta_line) - 1
+                    requests.append({
+                        "updateTextStyle": {
+                            "range": {"startIndex": index, "endIndex": meta_end},
+                            "textStyle": {"italic": True, "fontSize": {"magnitude": 10, "unit": "PT"}},
+                            "fields": "italic,fontSize",
+                        }
+                    })
+                    index += len(meta_line)
+
+                # Bullets
+                for bullet in exp.get("bullets", []):
+                    bullet_text = f"• {bullet.get('content', '')}\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": bullet_text}})
+                    index += len(bullet_text)
+
+                # Spacing between experiences
+                requests.append({"insertText": {"location": {"index": index}, "text": "\n"}})
+                index += 1
+
+        # === PROJECTS ===
+        if projects:
+            index = self._add_section_header(requests, index, "PROJECTS")
+
+            for proj in projects:
+                # Project Name (Bold)
+                proj_line = f"{proj.get('name', 'Project')}\n"
+                requests.append({"insertText": {"location": {"index": index}, "text": proj_line}})
+                proj_end = index + len(proj_line) - 1
+                requests.append({
+                    "updateTextStyle": {
+                        "range": {"startIndex": index, "endIndex": proj_end},
+                        "textStyle": {"bold": True},
+                        "fields": "bold",
+                    }
+                })
+                index += len(proj_line)
+
+                # Technologies (Italic)
+                if proj.get("technologies"):
+                    tech_line = f"Technologies: {', '.join(proj['technologies'])}\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": tech_line}})
+                    tech_end = index + len(tech_line) - 1
+                    requests.append({
+                        "updateTextStyle": {
+                            "range": {"startIndex": index, "endIndex": tech_end},
+                            "textStyle": {"italic": True, "fontSize": {"magnitude": 10, "unit": "PT"}},
+                            "fields": "italic,fontSize",
+                        }
+                    })
+                    index += len(tech_line)
+
+                # Description
+                if proj.get("description"):
+                    desc_text = proj["description"] + "\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": desc_text}})
+                    index += len(desc_text)
+
+                # Bullets
+                for bullet in proj.get("bullets", []):
+                    bullet_text = f"• {bullet.get('content', '')}\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": bullet_text}})
+                    index += len(bullet_text)
+
+                # Links
+                if proj.get("links"):
+                    links_text = "Links: " + " | ".join(
+                        link.get("url", "") for link in proj["links"] if link.get("url")
+                    ) + "\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": links_text}})
+                    index += len(links_text)
+
+                # Spacing
+                requests.append({"insertText": {"location": {"index": index}, "text": "\n"}})
+                index += 1
+
+        # === SKILLS ===
+        if skills:
+            index = self._add_section_header(requests, index, "SKILLS")
+            skills_text = ", ".join(skills) + "\n\n"
+            requests.append({"insertText": {"location": {"index": index}, "text": skills_text}})
+            index += len(skills_text)
+
+        # === PUBLICATIONS ===
+        if publications:
+            index = self._add_section_header(requests, index, "PUBLICATIONS")
+
+            for pub in publications:
+                # Title (Bold)
+                pub_title = pub.get("title", "Untitled")
+                title_line = f"{pub_title}\n"
+                requests.append({"insertText": {"location": {"index": index}, "text": title_line}})
+                title_end = index + len(title_line) - 1
+                requests.append({
+                    "updateTextStyle": {
+                        "range": {"startIndex": index, "endIndex": title_end},
+                        "textStyle": {"bold": True},
+                        "fields": "bold",
+                    }
+                })
+                index += len(title_line)
+
+                # Authors, Venue, Date
+                pub_meta = []
+                if pub.get("authors"):
+                    authors = pub["authors"]
+                    if isinstance(authors, list):
+                        authors = ", ".join(authors)
+                    pub_meta.append(authors)
+                if pub.get("venue"):
+                    pub_meta.append(pub["venue"])
+                if pub.get("publication_date"):
+                    pub_meta.append(pub["publication_date"])
+
+                if pub_meta:
+                    meta_line = " | ".join(pub_meta) + "\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": meta_line}})
+                    meta_end = index + len(meta_line) - 1
+                    requests.append({
+                        "updateTextStyle": {
+                            "range": {"startIndex": index, "endIndex": meta_end},
+                            "textStyle": {"italic": True, "fontSize": {"magnitude": 10, "unit": "PT"}},
+                            "fields": "italic,fontSize",
+                        }
+                    })
+                    index += len(meta_line)
+
+                # DOI or URL
+                if pub.get("doi"):
+                    doi_line = f"DOI: {pub['doi']}\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": doi_line}})
+                    index += len(doi_line)
+                elif pub.get("url"):
+                    url_line = f"{pub['url']}\n"
+                    requests.append({"insertText": {"location": {"index": index}, "text": url_line}})
+                    index += len(url_line)
+
+                # Spacing
+                requests.append({"insertText": {"location": {"index": index}, "text": "\n"}})
+                index += 1
+
+        return requests
+
+    def _add_section_header(
+        self,
+        requests: list[dict[str, Any]],
+        index: int,
+        header_text: str,
+    ) -> int:
+        """Add a section header with ATS-friendly formatting."""
+        # Header line with underline effect using a separator
+        header_line = f"{header_text}\n"
+        separator = "─" * 50 + "\n"
+
+        requests.append({"insertText": {"location": {"index": index}, "text": header_line}})
+        header_end = index + len(header_line) - 1
+        requests.append({
+            "updateTextStyle": {
+                "range": {"startIndex": index, "endIndex": header_end},
+                "textStyle": {"bold": True, "fontSize": {"magnitude": 12, "unit": "PT"}},
+                "fields": "bold,fontSize",
+            }
+        })
+        index += len(header_line)
+
+        requests.append({"insertText": {"location": {"index": index}, "text": separator}})
+        sep_end = index + len(separator) - 1
+        requests.append({
+            "updateTextStyle": {
+                "range": {"startIndex": index, "endIndex": sep_end},
+                "textStyle": {"fontSize": {"magnitude": 8, "unit": "PT"}},
+                "fields": "fontSize",
+            }
+        })
+        index += len(separator)
+
+        return index
+
+    def _format_date_range(
+        self,
+        start_date: str | None,
+        end_date: str | None,
+        is_current: bool,
+    ) -> str:
+        """Format date range for display."""
+        if not start_date:
+            return ""
+
+        # Parse and format dates (assuming ISO format YYYY-MM-DD)
+        try:
+            from datetime import datetime
+            start = datetime.fromisoformat(start_date)
+            start_str = start.strftime("%b %Y")
+        except (ValueError, TypeError):
+            start_str = start_date[:7] if start_date and len(start_date) >= 7 else start_date
+
+        if is_current:
+            return f"{start_str} - Present"
+        elif end_date:
+            try:
+                end = datetime.fromisoformat(end_date)
+                end_str = end.strftime("%b %Y")
+            except (ValueError, TypeError):
+                end_str = end_date[:7] if end_date and len(end_date) >= 7 else end_date
+            return f"{start_str} - {end_str}"
+        else:
+            return start_str
+
 
 class GoogleDriveService:
     """Service for interacting with Google Drive."""
