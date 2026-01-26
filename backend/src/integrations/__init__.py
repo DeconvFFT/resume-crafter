@@ -1,5 +1,14 @@
 """External service integrations."""
 
+from .smtp_email import (
+    SMTPConfig,
+    SMTPEmailService,
+    EmailMessage,
+    EmailAttachment,
+    SendResult,
+    get_smtp_service,
+    configure_smtp_service,
+)
 from .scheduling import (
     SchedulingProvider,
     MeetingType,
@@ -19,6 +28,14 @@ from .scheduling import (
 )
 
 __all__ = [
+    # SMTP Email
+    "SMTPConfig",
+    "SMTPEmailService",
+    "EmailMessage",
+    "EmailAttachment",
+    "SendResult",
+    "get_smtp_service",
+    "configure_smtp_service",
     # Enums
     "SchedulingProvider",
     "MeetingType",
