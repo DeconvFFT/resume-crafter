@@ -126,6 +126,9 @@ async def list_executions(
     """List executions with filters."""
     user_id = str(current_user.id)
 
+    # Ensure sample executions exist for development/demo (creates if none exist)
+    ensure_sample_executions_for_user(user_id)
+
     # Filter executions
     filtered = [
         ex for ex in _executions.values()
@@ -655,3 +658,217 @@ async def add_execution_log(
     }
 
     _execution_logs[execution_id].append(log_entry)
+
+
+# ============ Sample Data Initialization ============
+
+
+def _create_sample_executions_for_user(user_id: str) -> None:
+    """Create sample execution data for a user (for development/demo purposes).
+
+    This is called when a user first accesses the executions endpoint
+    and no executions exist for them.
+    """
+    from uuid import uuid4
+    from datetime import timedelta
+
+    now = datetime.utcnow()
+
+    # Sample execution 1: Completed job discovery
+    exec_id_1 = str(uuid4())
+    started_1 = now - timedelta(hours=2)
+    completed_1 = started_1 + timedelta(minutes=15)
+    _executions[exec_id_1] = {
+        "id": exec_id_1,
+        "user_id": user_id,
+        "workflow_type": WorkflowType.JOB_DISCOVERY.value,
+        "status": ExecutionStatus.COMPLETED.value,
+        "campaign_id": None,
+        "entity_id": None,
+        "entity_type": None,
+        "config": {"search_query": "Senior Software Engineer", "location": "Remote"},
+        "progress": 100,
+        "current_step": "complete",
+        "total_steps": 4,
+        "completed_steps": 4,
+        "started_at": started_1.isoformat(),
+        "completed_at": completed_1.isoformat(),
+        "duration_ms": int((completed_1 - started_1).total_seconds() * 1000),
+        "result": {"jobs_found": 15, "jobs_matched": 8},
+        "error_message": None,
+        "scheduled_at": None,
+        "created_at": started_1.isoformat(),
+        "updated_at": completed_1.isoformat(),
+    }
+    _execution_steps[exec_id_1] = []
+    _execution_logs[exec_id_1] = [
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_1,
+            "step_id": None,
+            "level": LogLevel.INFO.value,
+            "message": "Job discovery workflow started",
+            "data": None,
+            "timestamp": started_1.isoformat(),
+        },
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_1,
+            "step_id": None,
+            "level": LogLevel.INFO.value,
+            "message": "Found 15 matching job postings",
+            "data": {"count": 15},
+            "timestamp": (started_1 + timedelta(minutes=5)).isoformat(),
+        },
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_1,
+            "step_id": None,
+            "level": LogLevel.INFO.value,
+            "message": "Job discovery completed successfully",
+            "data": {"jobs_found": 15, "jobs_matched": 8},
+            "timestamp": completed_1.isoformat(),
+        },
+    ]
+
+    # Sample execution 2: Running job analysis
+    exec_id_2 = str(uuid4())
+    started_2 = now - timedelta(minutes=10)
+    _executions[exec_id_2] = {
+        "id": exec_id_2,
+        "user_id": user_id,
+        "workflow_type": WorkflowType.JOB_ANALYSIS.value,
+        "status": ExecutionStatus.RUNNING.value,
+        "campaign_id": None,
+        "entity_id": None,
+        "entity_type": "job",
+        "config": {"job_id": str(uuid4())},
+        "progress": 65,
+        "current_step": "analyzing_requirements",
+        "total_steps": 5,
+        "completed_steps": 3,
+        "started_at": started_2.isoformat(),
+        "completed_at": None,
+        "duration_ms": None,
+        "result": None,
+        "error_message": None,
+        "scheduled_at": None,
+        "created_at": started_2.isoformat(),
+        "updated_at": now.isoformat(),
+    }
+    _execution_steps[exec_id_2] = []
+    _execution_logs[exec_id_2] = [
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_2,
+            "step_id": None,
+            "level": LogLevel.INFO.value,
+            "message": "Starting job analysis workflow",
+            "data": None,
+            "timestamp": started_2.isoformat(),
+        },
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_2,
+            "step_id": None,
+            "level": LogLevel.INFO.value,
+            "message": "Extracting job requirements",
+            "data": None,
+            "timestamp": (started_2 + timedelta(minutes=2)).isoformat(),
+        },
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_2,
+            "step_id": None,
+            "level": LogLevel.INFO.value,
+            "message": "Analyzing skill requirements",
+            "data": {"skills_found": 12},
+            "timestamp": (started_2 + timedelta(minutes=5)).isoformat(),
+        },
+    ]
+
+    # Sample execution 3: Failed resume generation
+    exec_id_3 = str(uuid4())
+    started_3 = now - timedelta(hours=1)
+    failed_3 = started_3 + timedelta(minutes=3)
+    _executions[exec_id_3] = {
+        "id": exec_id_3,
+        "user_id": user_id,
+        "workflow_type": WorkflowType.RESUME_GENERATION.value,
+        "status": ExecutionStatus.FAILED.value,
+        "campaign_id": None,
+        "entity_id": None,
+        "entity_type": "resume_match",
+        "config": {"match_id": str(uuid4()), "format": "pdf"},
+        "progress": 25,
+        "current_step": "generating_content",
+        "total_steps": 4,
+        "completed_steps": 1,
+        "started_at": started_3.isoformat(),
+        "completed_at": failed_3.isoformat(),
+        "duration_ms": int((failed_3 - started_3).total_seconds() * 1000),
+        "result": None,
+        "error_message": "Template rendering failed: missing required field 'experience_bullets'",
+        "scheduled_at": None,
+        "created_at": started_3.isoformat(),
+        "updated_at": failed_3.isoformat(),
+    }
+    _execution_steps[exec_id_3] = []
+    _execution_logs[exec_id_3] = [
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_3,
+            "step_id": None,
+            "level": LogLevel.INFO.value,
+            "message": "Starting resume generation",
+            "data": None,
+            "timestamp": started_3.isoformat(),
+        },
+        {
+            "id": str(uuid4()),
+            "execution_id": exec_id_3,
+            "step_id": None,
+            "level": LogLevel.ERROR.value,
+            "message": "Template rendering failed: missing required field 'experience_bullets'",
+            "data": {"error_type": "ValidationError"},
+            "timestamp": failed_3.isoformat(),
+        },
+    ]
+
+    # Sample execution 4: Pending application processing
+    exec_id_4 = str(uuid4())
+    created_4 = now - timedelta(minutes=5)
+    _executions[exec_id_4] = {
+        "id": exec_id_4,
+        "user_id": user_id,
+        "workflow_type": WorkflowType.APPLICATION_PROCESSING.value,
+        "status": ExecutionStatus.PENDING.value,
+        "campaign_id": None,
+        "entity_id": None,
+        "entity_type": "application",
+        "config": {"application_ids": [str(uuid4()), str(uuid4())]},
+        "progress": 0,
+        "current_step": None,
+        "total_steps": 3,
+        "completed_steps": 0,
+        "started_at": None,
+        "completed_at": None,
+        "duration_ms": None,
+        "result": None,
+        "error_message": None,
+        "scheduled_at": (now + timedelta(minutes=30)).isoformat(),
+        "created_at": created_4.isoformat(),
+        "updated_at": created_4.isoformat(),
+    }
+    _execution_steps[exec_id_4] = []
+    _execution_logs[exec_id_4] = []
+
+    logger.info(f"Created 4 sample executions for user {user_id}")
+
+
+def ensure_sample_executions_for_user(user_id: str) -> None:
+    """Ensure sample executions exist for a user (called on first access)."""
+    # Check if user already has executions
+    user_executions = [ex for ex in _executions.values() if ex.get("user_id") == user_id]
+    if not user_executions:
+        _create_sample_executions_for_user(user_id)

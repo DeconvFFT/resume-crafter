@@ -157,6 +157,84 @@ async def create_campaign(
     return campaign
 
 
+async def _ensure_sample_campaigns_for_user(
+    user_id: UUID,
+    db: AsyncSession,
+) -> None:
+    """Create sample campaigns for a user if none exist (for development/demo).
+
+    This helps users see how the automation features work without having to
+    create campaigns manually.
+    """
+    # Check if user already has any campaigns
+    count_result = await db.execute(
+        select(func.count()).where(
+            SearchCampaign.user_id == user_id,
+            SearchCampaign.deleted_at.is_(None),
+        )
+    )
+    existing_count = count_result.scalar() or 0
+
+    if existing_count > 0:
+        return  # User already has campaigns
+
+    # Create sample campaigns
+    sample_campaigns = [
+        SearchCampaign(
+            user_id=user_id,
+            name="Senior Software Engineer - Remote",
+            status=CampaignStatus.ACTIVE,
+            target_roles=["Senior Software Engineer", "Staff Engineer", "Tech Lead"],
+            target_locations=["Remote", "San Francisco, CA", "New York, NY"],
+            target_companies=["Google", "Meta", "Amazon", "Microsoft", "Apple"],
+            keywords=["Python", "distributed systems", "backend"],
+            excluded_keywords=["junior", "intern", "entry-level"],
+            min_salary=180000,
+            max_salary=350000,
+            remote_preference="remote",
+            experience_level="senior",
+            settings={"auto_apply": False, "daily_limit": 10},
+        ),
+        SearchCampaign(
+            user_id=user_id,
+            name="ML Engineer Opportunities",
+            status=CampaignStatus.DRAFT,
+            target_roles=["Machine Learning Engineer", "ML Engineer", "AI Engineer"],
+            target_locations=["Remote", "Seattle, WA", "Boston, MA"],
+            target_companies=None,
+            keywords=["machine learning", "PyTorch", "TensorFlow", "LLM"],
+            excluded_keywords=None,
+            min_salary=200000,
+            max_salary=400000,
+            remote_preference="hybrid",
+            experience_level="senior",
+            settings={"auto_apply": False, "daily_limit": 5},
+        ),
+        SearchCampaign(
+            user_id=user_id,
+            name="Startup Tech Roles",
+            status=CampaignStatus.PAUSED,
+            target_roles=["Founding Engineer", "Principal Engineer", "CTO"],
+            target_locations=["San Francisco, CA", "New York, NY", "Austin, TX"],
+            target_companies=None,
+            keywords=["startup", "equity", "early-stage", "Series A", "Series B"],
+            excluded_keywords=["enterprise", "government", "contractor"],
+            min_salary=150000,
+            max_salary=None,
+            remote_preference="any",
+            experience_level="lead",
+            settings={"auto_apply": False, "daily_limit": 3},
+        ),
+    ]
+
+    for campaign in sample_campaigns:
+        db.add(campaign)
+
+    await db.flush()
+    await db.commit()
+    logger.info(f"Created {len(sample_campaigns)} sample campaigns for user {user_id}")
+
+
 @router.get("/campaigns", response_model=SearchCampaignListResponse)
 async def list_campaigns(
     current_user: CurrentUser,
@@ -166,6 +244,9 @@ async def list_campaigns(
     offset: int = Query(0, ge=0),
 ) -> SearchCampaignListResponse:
     """List all search campaigns for the current user."""
+    # Ensure sample campaigns exist for development/demo (creates if none exist)
+    await _ensure_sample_campaigns_for_user(current_user.id, db)
+
     query = select(SearchCampaign).where(
         SearchCampaign.user_id == current_user.id,
         SearchCampaign.deleted_at.is_(None),

@@ -15,6 +15,9 @@ interface AuthState {
     fullName: string | null;
   } | null;
   _hasHydrated: boolean;
+  // Track if we've verified auth at least once in this session (not persisted)
+  // This prevents false redirects when navigating between pages
+  _hasVerifiedAuth: boolean;
 
   // Actions
   setTokens: (accessToken: string, refreshToken: string, expiresIn: number) => void;
@@ -23,6 +26,7 @@ interface AuthState {
   isAuthenticated: () => boolean;
   isTokenExpired: () => boolean;
   setHasHydrated: (state: boolean) => void;
+  setHasVerifiedAuth: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -33,8 +37,10 @@ export const useAuthStore = create<AuthState>()(
       expiresAt: null,
       user: null,
       _hasHydrated: false,
+      _hasVerifiedAuth: false,
 
       setHasHydrated: (state) => set({ _hasHydrated: state }),
+      setHasVerifiedAuth: (state) => set({ _hasVerifiedAuth: state }),
 
       setTokens: (accessToken, refreshToken, expiresIn) => {
         const expiresAt = Date.now() + expiresIn * 1000;
@@ -55,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           expiresAt: null,
           user: null,
+          _hasVerifiedAuth: false,
         });
         // Remove the auth cookie
         if (typeof document !== "undefined") {
