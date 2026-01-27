@@ -11,9 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Trash2,
-  CheckCircle,
-  Clock,
-  AlertCircle,
   ExternalLink,
   Target,
   Link as LinkIcon,
@@ -22,12 +19,14 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StatusBadge, type StatusType } from "@/components/ui/status-badge";
 
-const statusConfig = {
-  pending: { icon: Clock, label: "Queued", color: "text-warning" },
-  processing: { icon: Loader2, label: "Processing", color: "text-info" },
-  completed: { icon: CheckCircle, label: "Complete", color: "text-success" },
-  failed: { icon: AlertCircle, label: "Failed", color: "text-destructive" },
+// Map job processing statuses to StatusBadge statuses with custom labels
+const jobStatusLabels: Record<string, string> = {
+  pending: "Queued",
+  processing: "Processing",
+  completed: "Complete",
+  failed: "Failed",
 };
 
 export default function JobsPage() {
@@ -193,9 +192,8 @@ export default function JobsPage() {
         ) : (
           <div className="border border-border bg-card divide-y divide-border" role="list">
             {jobs.map((job: any, index: number) => {
-              const status = statusConfig[job.processing_status as keyof typeof statusConfig] || statusConfig.pending;
-              const StatusIcon = status.icon;
-              const isProcessing = job.processing_status === "processing" || job.processing_status === "pending";
+              const jobStatus = (job.processing_status || "pending") as StatusType;
+              const customLabel = jobStatusLabels[jobStatus];
 
               return (
                 <div
@@ -257,25 +255,12 @@ export default function JobsPage() {
                         </div>
 
                         {/* Status badge */}
-                        <span
-                          className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 border font-mono text-2xs uppercase tracking-widest flex-shrink-0",
-                            status.color,
-                            job.processing_status === "completed" && "border-success/30 bg-success/5",
-                            job.processing_status === "processing" && "border-info/30 bg-info/5",
-                            job.processing_status === "pending" && "border-warning/30 bg-warning/5",
-                            job.processing_status === "failed" && "border-destructive/30 bg-destructive/5"
-                          )}
-                        >
-                          <StatusIcon
-                            className={cn(
-                              "h-3 w-3",
-                              isProcessing && "animate-spin"
-                            )}
-                            aria-hidden="true"
-                          />
-                          {status.label}
-                        </span>
+                        <StatusBadge
+                          status={jobStatus}
+                          label={customLabel}
+                          size="sm"
+                          className="flex-shrink-0"
+                        />
                       </div>
                     </div>
 

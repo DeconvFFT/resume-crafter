@@ -443,16 +443,18 @@ export default function ProjectsPage() {
                         }}
                         className="p-1 text-muted-foreground hover:text-primary transition-colors"
                         title="Re-analyze from GitHub"
+                        aria-label={`Re-analyze ${project.name} from GitHub`}
                         disabled={taskStatuses[project.id]?.status === "processing"}
                       >
-                        <Sparkles className="h-4 w-4" />
+                        <Sparkles className="h-4 w-4" aria-hidden="true" />
                       </button>
                     )}
                     <button
                       onClick={() => deleteMutation.mutate(project.id)}
                       className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label={`Delete ${project.name}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>

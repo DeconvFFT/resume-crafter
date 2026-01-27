@@ -4,24 +4,17 @@ import logging
 from typing import Annotated
 from uuid import UUID
 
-from arq import ArqRedis
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.auth.dependencies import CurrentUser
+from src.core.dependencies import get_arq_redis
 from src.models.database import BackgroundTask, JobDescription, ResumeMatch, ResumeMatchItem, TaskStatus, User
 from src.core.resume_generator import get_resume_generator
 
 logger = logging.getLogger(__name__)
-
-
-async def get_arq_redis() -> ArqRedis:
-    """Get ARQ Redis connection."""
-    from arq import create_pool
-    from src.tasks.worker import get_redis_settings
-    return await create_pool(get_redis_settings())
 
 
 from src.models.schemas.resume import (

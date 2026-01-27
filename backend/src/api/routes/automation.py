@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -898,110 +898,136 @@ async def get_automation_stats(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AutomationDashboard:
     """Get dashboard metrics for automation features."""
-    # Count active campaigns
-    active_campaigns_result = await db.execute(
+    import asyncio
+    from datetime import timedelta
+    from sqlalchemy import case, literal_column
+
+    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+
+    # Define all count queries to run in parallel
+    active_campaigns_query = db.execute(
         select(func.count()).where(
             SearchCampaign.user_id == current_user.id,
             SearchCampaign.status == CampaignStatus.ACTIVE,
             SearchCampaign.deleted_at.is_(None),
         )
     )
-    active_campaigns = active_campaigns_result.scalar() or 0
 
-    # Count total discovered jobs
-    total_jobs_result = await db.execute(
+    total_jobs_query = db.execute(
         select(func.count()).where(
             DiscoveredJob.user_id == current_user.id,
             DiscoveredJob.deleted_at.is_(None),
         )
     )
-    total_jobs_discovered = total_jobs_result.scalar() or 0
 
-    # Count pending applications (queued + resume_generated + applying)
     pending_statuses = [
         ApplicationStatus.QUEUED,
         ApplicationStatus.RESUME_GENERATED,
         ApplicationStatus.APPLYING,
     ]
-    pending_result = await db.execute(
+    pending_query = db.execute(
         select(func.count()).where(
             JobApplication.user_id == current_user.id,
             JobApplication.status.in_(pending_statuses),
             JobApplication.deleted_at.is_(None),
         )
     )
-    pending_applications = pending_result.scalar() or 0
 
-    # Count applications this week
-    from datetime import timedelta
-    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
-    weekly_result = await db.execute(
+    weekly_query = db.execute(
         select(func.count()).where(
             JobApplication.user_id == current_user.id,
             JobApplication.applied_at >= week_ago,
             JobApplication.deleted_at.is_(None),
         )
     )
+
+    # Single aggregate query with CASE WHEN for pipeline stats and rate calculations
+    # This replaces 8+ individual queries with one efficient query
+    pipeline_query = db.execute(
+        select(
+            # Pipeline stats - count for each status
+            *[
+                func.sum(
+                    case((JobApplication.status == status_enum, 1), else_=0)
+                ).label(status_enum.value)
+                for status_enum in ApplicationStatus
+            ],
+            # Applied count (for rate calculations)
+            func.sum(
+                case(
+                    (JobApplication.status.in_([
+                        ApplicationStatus.APPLIED,
+                        ApplicationStatus.VIEWED,
+                        ApplicationStatus.RESPONSE_RECEIVED,
+                        ApplicationStatus.INTERVIEW_SCHEDULED,
+                        ApplicationStatus.REJECTED,
+                        ApplicationStatus.OFFER_RECEIVED,
+                    ]), 1),
+                    else_=0
+                )
+            ).label("applied_count"),
+            # Response count
+            func.sum(
+                case(
+                    (JobApplication.status.in_([
+                        ApplicationStatus.RESPONSE_RECEIVED,
+                        ApplicationStatus.INTERVIEW_SCHEDULED,
+                        ApplicationStatus.REJECTED,
+                        ApplicationStatus.OFFER_RECEIVED,
+                    ]), 1),
+                    else_=0
+                )
+            ).label("response_count"),
+            # Interview count
+            func.sum(
+                case(
+                    (JobApplication.status.in_([
+                        ApplicationStatus.INTERVIEW_SCHEDULED,
+                        ApplicationStatus.OFFER_RECEIVED,
+                    ]), 1),
+                    else_=0
+                )
+            ).label("interview_count"),
+        ).where(
+            JobApplication.user_id == current_user.id,
+            JobApplication.deleted_at.is_(None),
+        )
+    )
+
+    # Run all queries in parallel
+    (
+        active_campaigns_result,
+        total_jobs_result,
+        pending_result,
+        weekly_result,
+        pipeline_result,
+    ) = await asyncio.gather(
+        active_campaigns_query,
+        total_jobs_query,
+        pending_query,
+        weekly_query,
+        pipeline_query,
+    )
+
+    active_campaigns = active_campaigns_result.scalar() or 0
+    total_jobs_discovered = total_jobs_result.scalar() or 0
+    pending_applications = pending_result.scalar() or 0
     applications_this_week = weekly_result.scalar() or 0
 
-    # Calculate response rate
-    applied_count_result = await db.execute(
-        select(func.count()).where(
-            JobApplication.user_id == current_user.id,
-            JobApplication.status.in_([
-                ApplicationStatus.APPLIED,
-                ApplicationStatus.VIEWED,
-                ApplicationStatus.RESPONSE_RECEIVED,
-                ApplicationStatus.INTERVIEW_SCHEDULED,
-                ApplicationStatus.REJECTED,
-                ApplicationStatus.OFFER_RECEIVED,
-            ]),
-            JobApplication.deleted_at.is_(None),
-        )
-    )
-    applied_count = applied_count_result.scalar() or 0
-
-    response_count_result = await db.execute(
-        select(func.count()).where(
-            JobApplication.user_id == current_user.id,
-            JobApplication.status.in_([
-                ApplicationStatus.RESPONSE_RECEIVED,
-                ApplicationStatus.INTERVIEW_SCHEDULED,
-                ApplicationStatus.REJECTED,
-                ApplicationStatus.OFFER_RECEIVED,
-            ]),
-            JobApplication.deleted_at.is_(None),
-        )
-    )
-    response_count = response_count_result.scalar() or 0
-    response_rate = (response_count / applied_count * 100) if applied_count > 0 else 0.0
-
-    # Calculate interview rate
-    interview_count_result = await db.execute(
-        select(func.count()).where(
-            JobApplication.user_id == current_user.id,
-            JobApplication.status.in_([
-                ApplicationStatus.INTERVIEW_SCHEDULED,
-                ApplicationStatus.OFFER_RECEIVED,
-            ]),
-            JobApplication.deleted_at.is_(None),
-        )
-    )
-    interview_count = interview_count_result.scalar() or 0
-    interview_rate = (interview_count / applied_count * 100) if applied_count > 0 else 0.0
-
-    # Get pipeline stats
+    # Extract pipeline stats from single aggregate query
+    pipeline_row = pipeline_result.one()
     pipeline_stats = ApplicationPipelineStats()
     for status_enum in ApplicationStatus:
-        count_result = await db.execute(
-            select(func.count()).where(
-                JobApplication.user_id == current_user.id,
-                JobApplication.status == status_enum,
-                JobApplication.deleted_at.is_(None),
-            )
-        )
-        count = count_result.scalar() or 0
+        count = getattr(pipeline_row, status_enum.value, 0) or 0
         setattr(pipeline_stats, status_enum.value, count)
+
+    # Calculate rates from aggregate query results
+    applied_count = pipeline_row.applied_count or 0
+    response_count = pipeline_row.response_count or 0
+    interview_count = pipeline_row.interview_count or 0
+
+    response_rate = (response_count / applied_count * 100) if applied_count > 0 else 0.0
+    interview_rate = (interview_count / applied_count * 100) if applied_count > 0 else 0.0
 
     return AutomationDashboard(
         active_campaigns=active_campaigns,

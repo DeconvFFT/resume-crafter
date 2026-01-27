@@ -3,13 +3,13 @@
 from typing import Annotated
 from uuid import UUID
 
-from arq import ArqRedis
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies import CurrentUser
 from src.config import get_settings
+from src.core.dependencies import get_arq_redis
 from src.models.database import BackgroundTask, Document, SourceType, TaskStatus
 from src.models.schemas.document import (
     DocumentListResponse,
@@ -22,13 +22,6 @@ from src.storage.file_storage import get_file_storage
 
 router = APIRouter()
 settings = get_settings()
-
-
-async def get_arq_redis() -> ArqRedis:
-    """Get ARQ Redis connection."""
-    from arq import create_pool
-    from src.tasks.worker import get_redis_settings
-    return await create_pool(get_redis_settings())
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Toaster } from "sonner";
+import Loading from "./loading";
 
 // Modern SaaS typography - Primary sans-serif font
 const inter = Inter({
@@ -36,7 +38,9 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased">
         <Providers>
-          {children}
+          <Suspense fallback={<Loading />}>
+            {children}
+          </Suspense>
           <Toaster
             position="top-right"
             richColors
@@ -51,3 +55,4 @@ export default function RootLayout({
     </html>
   );
 }
+

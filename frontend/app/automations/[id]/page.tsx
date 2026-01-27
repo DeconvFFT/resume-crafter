@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, type DragEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   useNodesState,
   useEdgesState,
@@ -33,15 +34,87 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { NodePanel, nodeTypes as availableNodeTypes, type NodeType } from "@/components/workflow/node-panel";
-import { WorkflowCanvas } from "@/components/workflow/workflow-canvas";
-import { NodeConfigPanel, type NodeConfig } from "@/components/workflow/node-config-panel";
-import {
-  ExecutionPanel,
-  type WorkflowExecution,
-  type NodeExecution,
-} from "@/components/workflow/execution-panel";
+
+// Static imports for types and lightweight components
+import { nodeTypes as availableNodeTypes, type NodeType } from "@/components/workflow/node-panel";
+import type { NodeConfig } from "@/components/workflow/node-config-panel";
+import type { WorkflowExecution, NodeExecution } from "@/components/workflow/execution-panel";
 import type { WorkflowNodeData } from "@/components/workflow/workflow-node";
+
+// Dynamic imports for heavy workflow components (~150KB+ for ReactFlow)
+// These are only loaded when the workflow editor page is accessed
+import { WorkflowCanvasSkeleton } from "@/components/workflow/workflow-canvas-skeleton";
+
+const WorkflowCanvas = dynamic(
+  () => import("@/components/workflow/workflow-canvas").then((mod) => mod.WorkflowCanvas),
+  {
+    loading: () => <WorkflowCanvasSkeleton className="flex-1 rounded-none border-0" />,
+    ssr: false, // ReactFlow requires browser APIs (window, document)
+  }
+);
+
+const NodePanel = dynamic(
+  () => import("@/components/workflow/node-panel").then((mod) => mod.NodePanel),
+  {
+    loading: () => <NodePanelSkeleton />,
+    ssr: false,
+  }
+);
+
+const NodeConfigPanel = dynamic(
+  () => import("@/components/workflow/node-config-panel").then((mod) => mod.NodeConfigPanel),
+  {
+    loading: () => <ConfigPanelSkeleton />,
+    ssr: false,
+  }
+);
+
+const ExecutionPanel = dynamic(
+  () => import("@/components/workflow/execution-panel").then((mod) => mod.ExecutionPanel),
+  {
+    loading: () => <ExecutionPanelSkeleton />,
+    ssr: false,
+  }
+);
+
+// Lightweight skeleton components for dynamic imports
+function NodePanelSkeleton() {
+  return (
+    <div className="w-64 bg-card border-r border-border p-4 space-y-4 shrink-0">
+      <Skeleton className="h-6 w-32" />
+      <Skeleton className="h-10 w-full" />
+      <div className="space-y-2">
+        {[...Array(6)].map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ConfigPanelSkeleton() {
+  return (
+    <div className="w-80 bg-card border-l border-border p-4 space-y-4">
+      <Skeleton className="h-6 w-40" />
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  );
+}
+
+function ExecutionPanelSkeleton() {
+  return (
+    <div className="h-32 bg-card border-t border-border p-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-8 w-24" />
+      </div>
+      <Skeleton className="h-2 w-full mt-4" />
+    </div>
+  );
+}
+
 import {
   useWorkflowStore,
   useHistoryControls,
@@ -659,6 +732,7 @@ export default function WorkflowBuilderPage() {
               <button
                 onClick={() => setIsEditingName(true)}
                 className="text-lg font-semibold hover:text-primary transition-colors"
+                aria-label={`Edit workflow name: ${workflowName}`}
               >
                 {workflowName}
               </button>

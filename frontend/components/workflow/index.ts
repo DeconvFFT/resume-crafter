@@ -5,6 +5,11 @@ export {
 } from "./workflow-canvas";
 
 export {
+  WorkflowCanvasSkeleton,
+  type WorkflowCanvasSkeletonProps,
+} from "./workflow-canvas-skeleton";
+
+export {
   WorkflowNode,
   workflowNodeTypes,
   type WorkflowNodeType,

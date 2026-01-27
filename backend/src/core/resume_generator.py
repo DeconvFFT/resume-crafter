@@ -46,6 +46,8 @@ class ResumeGenerator:
         Returns:
             JSON-serializable resume dict with ALL user data.
         """
+        import asyncio
+
         # Get included items for tracking which bullets are matched
         included_items = [item for item in match.items if item.included_in_resume]
 
@@ -61,8 +63,8 @@ class ResumeGenerator:
             if item.project_bullet_id
         }
 
-        # Fetch ALL user experiences with bullets
-        exp_result = await db.execute(
+        # Execute all 4 queries in parallel using asyncio.gather()
+        exp_query = db.execute(
             select(Experience)
             .options(selectinload(Experience.bullets))
             .where(
@@ -71,7 +73,41 @@ class ResumeGenerator:
             )
             .order_by(Experience.start_date.desc())
         )
+        proj_query = db.execute(
+            select(Project)
+            .options(selectinload(Project.bullets), selectinload(Project.links))
+            .where(
+                Project.user_id == user.id,
+                Project.deleted_at.is_(None),
+            )
+            .order_by(Project.created_at.desc())
+        )
+        skill_query = db.execute(
+            select(Skill)
+            .where(
+                Skill.user_id == user.id,
+                Skill.deleted_at.is_(None),
+            )
+            .order_by(Skill.display_order)
+        )
+        pub_query = db.execute(
+            select(Publication)
+            .where(
+                Publication.user_id == user.id,
+                Publication.deleted_at.is_(None),
+            )
+            .order_by(Publication.display_order)
+        )
+
+        # Run all queries in parallel
+        exp_result, proj_result, skill_result, pub_result = await asyncio.gather(
+            exp_query, proj_query, skill_query, pub_query
+        )
+
         all_experiences = exp_result.scalars().all()
+        all_projects = proj_result.scalars().all()
+        user_skills = [s.name for s in skill_result.scalars().all()]
+        publications = pub_result.scalars().all()
 
         # Build experiences data with ALL bullets, marking matched ones
         experiences_data = []
@@ -96,18 +132,6 @@ class ResumeGenerator:
                 "is_current": exp.is_current,
                 "bullets": bullets_data,
             })
-
-        # Fetch ALL user projects with bullets and links
-        proj_result = await db.execute(
-            select(Project)
-            .options(selectinload(Project.bullets), selectinload(Project.links))
-            .where(
-                Project.user_id == user.id,
-                Project.deleted_at.is_(None),
-            )
-            .order_by(Project.created_at.desc())
-        )
-        all_projects = proj_result.scalars().all()
 
         # Build projects data with ALL bullets, marking matched ones
         projects_data = []
@@ -135,28 +159,6 @@ class ResumeGenerator:
                     for link in proj.links
                 ],
             })
-
-        # Fetch ALL user skills from Skill table
-        skill_result = await db.execute(
-            select(Skill)
-            .where(
-                Skill.user_id == user.id,
-                Skill.deleted_at.is_(None),
-            )
-            .order_by(Skill.display_order)
-        )
-        user_skills = [s.name for s in skill_result.scalars().all()]
-
-        # Fetch ALL user publications
-        pub_result = await db.execute(
-            select(Publication)
-            .where(
-                Publication.user_id == user.id,
-                Publication.deleted_at.is_(None),
-            )
-            .order_by(Publication.display_order)
-        )
-        publications = pub_result.scalars().all()
 
         # Build publications data
         publications_data = []

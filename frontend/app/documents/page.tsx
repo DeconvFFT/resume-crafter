@@ -18,9 +18,6 @@ import {
 import {
   Upload,
   Trash2,
-  CheckCircle,
-  Clock,
-  AlertCircle,
   Link as LinkIcon,
   Loader2,
   ChevronDown,
@@ -32,12 +29,14 @@ import {
   WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StatusBadge, type StatusType } from "@/components/ui/status-badge";
 
-const statusConfig = {
-  pending: { icon: Clock, label: "Queued", color: "text-warning" },
-  processing: { icon: Loader2, label: "Processing", color: "text-info" },
-  completed: { icon: CheckCircle, label: "Complete", color: "text-success" },
-  failed: { icon: AlertCircle, label: "Failed", color: "text-destructive" },
+// Map document processing statuses to StatusBadge statuses with custom labels
+const docStatusLabels: Record<string, string> = {
+  pending: "Queued",
+  processing: "Processing",
+  completed: "Complete",
+  failed: "Failed",
 };
 
 // Component for displaying real-time processing stream
@@ -72,9 +71,14 @@ function ProcessingStream({
   });
 
   return (
-    <div className="mt-4 space-y-4">
+    <div
+      className="mt-4 space-y-4"
+      aria-live="polite"
+      aria-atomic="true"
+      aria-label="Document processing status"
+    >
       {/* SSE Connection Status */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" role="status">
         {isConnected ? (
           <>
             <Wifi className="h-3 w-3 text-success" aria-hidden="true" />
@@ -462,8 +466,8 @@ export default function DocumentsPage() {
         ) : (
           <div className="border border-border bg-card divide-y divide-border" role="list">
             {documents.map((doc: any, index: number) => {
-              const status = statusConfig[doc.processing_status as keyof typeof statusConfig] || statusConfig.pending;
-              const StatusIcon = status.icon;
+              const docStatus = (doc.processing_status || "pending") as StatusType;
+              const customLabel = docStatusLabels[docStatus];
               const isProcessing = doc.processing_status === "processing" || doc.processing_status === "pending";
 
               return (
@@ -562,27 +566,12 @@ export default function DocumentsPage() {
                       </div>
 
                       {/* Status badge */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span
-                          className={cn(
-                            "flex items-center gap-2 px-3 py-1.5 border font-mono text-2xs uppercase tracking-widest",
-                            status.color,
-                            doc.processing_status === "completed" && "border-success/30 bg-success/5",
-                            doc.processing_status === "processing" && "border-info/30 bg-info/5",
-                            doc.processing_status === "pending" && "border-warning/30 bg-warning/5",
-                            doc.processing_status === "failed" && "border-destructive/30 bg-destructive/5"
-                          )}
-                        >
-                          <StatusIcon
-                            className={cn(
-                              "h-3 w-3",
-                              isProcessing && "animate-spin"
-                            )}
-                            aria-hidden="true"
-                          />
-                          {status.label}
-                        </span>
-                      </div>
+                      <StatusBadge
+                        status={docStatus}
+                        label={customLabel}
+                        size="sm"
+                        className="flex-shrink-0"
+                      />
                     </div>
                   </div>
 

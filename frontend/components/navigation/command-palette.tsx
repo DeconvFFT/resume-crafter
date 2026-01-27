@@ -198,7 +198,6 @@ export function CommandPalette() {
     if (open) {
       setQuery("");
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [open]);
 
@@ -259,6 +258,7 @@ export function CommandPalette() {
                 }}
                 className="flex-1 bg-transparent text-base outline-none placeholder:italic placeholder:text-muted-foreground/60"
                 aria-label="Search commands"
+                autoFocus
               />
               <kbd className="px-2 py-1 font-mono text-2xs text-muted-foreground border border-border">
                 ESC

@@ -179,6 +179,13 @@ export function DashboardLayout({
   return (
     <AuthGuard>
       <div className="min-h-screen flex bg-background">
+        {/* Skip navigation link for keyboard users */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          Skip to main content
+        </a>
         <header className="fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border z-50 flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -257,7 +264,7 @@ export function DashboardLayout({
           </div>
         </aside>
 
-        <main className="flex-1 md:ml-56 mt-14">
+        <main id="main-content" className="flex-1 md:ml-56 mt-14" tabIndex={-1}>
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
             <div className="mb-6">
               <Breadcrumbs />

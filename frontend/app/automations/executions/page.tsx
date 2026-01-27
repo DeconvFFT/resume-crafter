@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   DataTable,
@@ -26,58 +25,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Play,
-  Pause,
-  XCircle,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
   MoreHorizontal,
   RefreshCw,
   Eye,
   Activity,
   ArrowLeft,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useExecutions, useCancelExecution } from "@/hooks/useExecutions";
+import { StatusBadge, type StatusType } from "@/components/ui/status-badge";
+import { PageSkeleton } from "@/components/ui/page-skeleton";
 import type { ExecutionResponse, ExecutionStatus, WorkflowType } from "@/lib/types/api";
 
 // ============================================================================
 // Configuration
 // ============================================================================
-
-const statusConfig: Record<ExecutionStatus, { label: string; icon: typeof Clock; className: string }> = {
-  pending: {
-    label: "Pending",
-    icon: Clock,
-    className: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
-  },
-  running: {
-    label: "Running",
-    icon: Play,
-    className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  },
-  paused: {
-    label: "Paused",
-    icon: Pause,
-    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-  },
-  completed: {
-    label: "Completed",
-    icon: CheckCircle2,
-    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-  },
-  failed: {
-    label: "Failed",
-    icon: AlertCircle,
-    className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-  },
-  cancelled: {
-    label: "Cancelled",
-    icon: XCircle,
-    className: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
-  },
-};
 
 const workflowTypeLabels: Record<WorkflowType, string> = {
   job_discovery: "Job Discovery",
@@ -183,20 +146,8 @@ export default function ExecutionsPage() {
       ),
       cell: ({ row }) => {
         const status = row.getValue("status") as ExecutionStatus;
-        const config = statusConfig[status];
-        const StatusIcon = config.icon;
         return (
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                config.className
-              )}
-            >
-              <StatusIcon className="h-3 w-3" />
-              {config.label}
-            </span>
-          </div>
+          <StatusBadge status={status as StatusType} size="sm" />
         );
       },
     },
@@ -298,32 +249,12 @@ export default function ExecutionsPage() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-        </div>
-        <div className="simple-card p-0">
-          <div className="p-4 border-b border-border flex gap-4">
-            <Skeleton className="h-9 w-40" />
-            <Skeleton className="h-9 w-40" />
-          </div>
-          <div className="divide-y divide-border">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="p-4 flex items-center gap-4">
-                <Skeleton className="h-4 flex-1" />
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-2 w-24" />
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-8 w-8" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PageSkeleton
+        variant="table"
+        count={5}
+        showHeader
+        headerWidth="w-40"
+      />
     );
   }
 

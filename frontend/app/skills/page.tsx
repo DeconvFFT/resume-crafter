@@ -271,19 +271,21 @@ export default function SkillsPage() {
                           onClick={() => toggleHighlight(skill.id, skill.is_highlighted)}
                           className="p-0.5 hover:bg-muted rounded"
                           title={skill.is_highlighted ? "Remove highlight" : "Highlight skill"}
+                          aria-label={skill.is_highlighted ? `Remove highlight from ${skill.name}` : `Highlight ${skill.name}`}
                         >
                           {skill.is_highlighted ? (
-                            <StarOff className="h-3 w-3 text-muted-foreground" />
+                            <StarOff className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                           ) : (
-                            <Star className="h-3 w-3 text-muted-foreground" />
+                            <Star className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                           )}
                         </button>
                         <button
                           onClick={() => deleteMutation.mutate(skill.id)}
                           className="p-0.5 hover:bg-destructive/10 rounded"
                           title="Delete skill"
+                          aria-label={`Delete ${skill.name}`}
                         >
-                          <Trash2 className="h-3 w-3 text-destructive" />
+                          <Trash2 className="h-3 w-3 text-destructive" aria-hidden="true" />
                         </button>
                       </div>
                     </div>
