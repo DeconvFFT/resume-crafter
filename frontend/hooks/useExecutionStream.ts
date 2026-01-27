@@ -277,7 +277,7 @@ export function useExecutionStream({
   // Build SSE URL with token as query parameter (EventSource doesn't support headers)
   const sseUrl =
     executionId && accessToken
-      ? `${API_BASE}/automation/executions/${executionId}/stream?token=${encodeURIComponent(
+      ? `${API_BASE}/api/automation/executions/${executionId}/stream?token=${encodeURIComponent(
           accessToken
         )}&include_history=${includeHistory}`
       : "";
