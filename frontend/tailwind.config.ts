@@ -61,27 +61,67 @@ const config: Config = {
         "node-action": "hsl(var(--node-action))",
         "node-condition": "hsl(var(--node-condition))",
         "node-output": "hsl(var(--node-output))",
+        // Executive Noir specific colors
+        violet: {
+          50: "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#7c3aed",
+          700: "#6d28d9",
+          800: "#5b21b6",
+          900: "#4c1d95",
+          950: "#2e1065",
+        },
+        teal: {
+          50: "#f0fdfa",
+          100: "#ccfbf1",
+          200: "#99f6e4",
+          300: "#5eead4",
+          400: "#2dd4bf",
+          500: "#14b8a6",
+          600: "#0d9488",
+          700: "#0f766e",
+          800: "#115e59",
+          900: "#134e4a",
+          950: "#042f2e",
+        },
       },
       borderRadius: {
         lg: "var(--radius-lg)",
         md: "var(--radius-md)",
         sm: "var(--radius-sm)",
+        xl: "var(--radius-xl)",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "Menlo", "monospace"],
+        sans: ["var(--font-sans)", "DM Sans", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "Menlo", "monospace"],
       },
       fontSize: {
-        "2xs": ["0.625rem", { lineHeight: "0.875rem" }],  // 10px
-        xs: ["0.75rem", { lineHeight: "1rem" }],          // 12px
-        sm: ["0.875rem", { lineHeight: "1.25rem" }],      // 14px
-        base: ["1rem", { lineHeight: "1.5rem" }],         // 16px
-        lg: ["1.125rem", { lineHeight: "1.75rem" }],      // 18px
-        xl: ["1.25rem", { lineHeight: "1.75rem" }],       // 20px
-        "2xl": ["1.5rem", { lineHeight: "2rem" }],        // 24px
-        "3xl": ["1.875rem", { lineHeight: "2.25rem" }],   // 30px
-        "4xl": ["2.25rem", { lineHeight: "2.5rem" }],     // 36px
-        "5xl": ["3rem", { lineHeight: "1.1" }],           // 48px
+        "2xs": ["0.625rem", { lineHeight: "0.875rem" }],   // 10px
+        xs: ["0.75rem", { lineHeight: "1rem" }],           // 12px
+        sm: ["0.875rem", { lineHeight: "1.25rem" }],       // 14px
+        base: ["1rem", { lineHeight: "1.5rem" }],          // 16px
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],       // 18px
+        xl: ["1.25rem", { lineHeight: "1.75rem" }],        // 20px
+        "2xl": ["1.5rem", { lineHeight: "2rem" }],         // 24px
+        "3xl": ["1.875rem", { lineHeight: "2.25rem" }],    // 30px
+        "4xl": ["2.25rem", { lineHeight: "2.5rem" }],      // 36px
+        "5xl": ["3rem", { lineHeight: "1.1" }],            // 48px
+        "6xl": ["3.75rem", { lineHeight: "1" }],           // 60px
+        "7xl": ["4.5rem", { lineHeight: "1" }],            // 72px
+      },
+      letterSpacing: {
+        tightest: "-0.05em",
+        tighter: "-0.025em",
+        tight: "-0.015em",
+        normal: "0",
+        wide: "0.025em",
+        wider: "0.05em",
+        widest: "0.1em",
       },
       spacing: {
         "0.5": "0.125rem",   // 2px
@@ -116,21 +156,51 @@ const config: Config = {
         "2xl": "0 25px 50px -12px rgb(0 0 0 / 0.25)",
         card: "0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08)",
         elevated: "0 4px 12px 0 rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08)",
+        // Premium shadows with violet glow
+        "glow-sm": "0 0 10px rgba(139, 92, 246, 0.2)",
+        "glow": "0 0 20px rgba(139, 92, 246, 0.3)",
+        "glow-lg": "0 0 30px rgba(139, 92, 246, 0.4)",
+        "glow-xl": "0 0 40px rgba(139, 92, 246, 0.5)",
+        // Teal glow for success states
+        "glow-teal-sm": "0 0 10px rgba(20, 184, 166, 0.2)",
+        "glow-teal": "0 0 20px rgba(20, 184, 166, 0.3)",
+        "glow-teal-lg": "0 0 30px rgba(20, 184, 166, 0.4)",
+        // Glass shadows
+        "glass": "0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.05) inset",
+        "glass-dark": "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03) inset",
+      },
+      backdropBlur: {
+        xs: "2px",
+        sm: "4px",
+        DEFAULT: "8px",
+        md: "12px",
+        lg: "16px",
+        xl: "24px",
+        "2xl": "40px",
+        "3xl": "64px",
       },
       animation: {
         "fade-in": "fadeIn 0.2s ease-out",
-        "fade-up": "fadeUp 0.3s ease-out",
+        "fade-up": "fadeUp 0.3s ease-out forwards",
         "scale-in": "scaleIn 0.2s ease-out",
         "slide-in-right": "slideInRight 0.3s ease-out",
         "slide-in-left": "slideInLeft 0.3s ease-out",
         "pulse-subtle": "pulseSubtle 2s ease-in-out infinite",
         shimmer: "shimmer 1.5s infinite",
+        // Premium animations
+        "glow-pulse": "glowPulse 2s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
+        "gradient-shift": "gradientShift 15s ease infinite",
         // Workflow animations
         "flow-pulse": "flowPulse 1.5s ease-in-out infinite",
         "node-appear": "nodeAppear 0.4s ease-out",
         // Collapsible animations
         "collapsible-down": "collapsibleDown 0.2s ease-out",
         "collapsible-up": "collapsibleUp 0.2s ease-out",
+        // Entrance animations
+        "slide-up-fade": "slideUpFade 0.4s ease-out",
+        "slide-down-fade": "slideDownFade 0.4s ease-out",
+        "scale-up-fade": "scaleUpFade 0.3s ease-out",
       },
       keyframes: {
         fadeIn: {
@@ -161,6 +231,19 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        glowPulse: {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(139, 92, 246, 0.3)" },
+          "50%": { boxShadow: "0 0 40px rgba(139, 92, 246, 0.5)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        gradientShift: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
         flowPulse: {
           "0%, 100%": { strokeDashoffset: "0" },
           "50%": { strokeDashoffset: "10" },
@@ -177,11 +260,39 @@ const config: Config = {
           from: { height: "var(--radix-collapsible-content-height)" },
           to: { height: "0" },
         },
+        slideUpFade: {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        slideDownFade: {
+          from: { opacity: "0", transform: "translateY(-20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        scaleUpFade: {
+          from: { opacity: "0", transform: "scale(0.9)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
       },
       maxWidth: {
         prose: "65ch",
         content: "800px",
         page: "1200px",
+        screen: "1440px",
+      },
+      backgroundImage: {
+        // Premium gradients
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "gradient-primary": "linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)",
+        "gradient-primary-subtle": "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(217, 70, 239, 0.1) 100%)",
+        "gradient-success": "linear-gradient(135deg, #14b8a6 0%, #10b981 100%)",
+        "gradient-accent": "linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)",
+        // Mesh gradients
+        "mesh-violet": `
+          radial-gradient(at 40% 20%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+          radial-gradient(at 80% 0%, rgba(217, 70, 239, 0.1) 0px, transparent 50%),
+          radial-gradient(at 0% 50%, rgba(20, 184, 166, 0.08) 0px, transparent 50%)
+        `,
       },
     },
   },

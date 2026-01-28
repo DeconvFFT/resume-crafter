@@ -25,6 +25,39 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { type NodeCategory, type NodeType } from "./node-panel";
 
+// Executive Noir color configuration
+const categoryColors: Record<NodeCategory, {
+  bg: string;
+  text: string;
+  glow: string;
+  border: string;
+}> = {
+  trigger: {
+    bg: "rgba(245, 158, 11, 0.12)",
+    text: "#F59E0B",
+    glow: "rgba(245, 158, 11, 0.3)",
+    border: "rgba(245, 158, 11, 0.3)",
+  },
+  action: {
+    bg: "rgba(139, 92, 246, 0.12)",
+    text: "#8B5CF6",
+    glow: "rgba(139, 92, 246, 0.3)",
+    border: "rgba(139, 92, 246, 0.3)",
+  },
+  logic: {
+    bg: "rgba(20, 184, 166, 0.12)",
+    text: "#14B8A6",
+    glow: "rgba(20, 184, 166, 0.3)",
+    border: "rgba(20, 184, 166, 0.3)",
+  },
+  output: {
+    bg: "rgba(34, 197, 94, 0.12)",
+    text: "#22C55E",
+    glow: "rgba(34, 197, 94, 0.3)",
+    border: "rgba(34, 197, 94, 0.3)",
+  },
+};
+
 // Node configuration data structure
 export interface NodeConfig {
   id: string;
@@ -106,7 +139,7 @@ export interface NodeConfigPanelProps {
   className?: string;
 }
 
-// Field wrapper component
+// Field wrapper component with Executive Noir styling
 interface FormFieldProps {
   label: string;
   htmlFor: string;
@@ -119,19 +152,19 @@ interface FormFieldProps {
 function FormField({ label, htmlFor, error, hint, required, children }: FormFieldProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={htmlFor} className="flex items-center gap-1">
+      <Label htmlFor={htmlFor} className="flex items-center gap-1 text-white/70 text-xs font-medium">
         {label}
-        {required && <span className="text-destructive">*</span>}
+        {required && <span className="text-amber-400">*</span>}
       </Label>
       {children}
       {hint && !error && (
-        <p className="text-2xs text-muted-foreground flex items-center gap-1">
+        <p className="text-[10px] text-white/40 flex items-center gap-1">
           <Info className="h-3 w-3" />
           {hint}
         </p>
       )}
       {error && (
-        <p className="text-2xs text-destructive flex items-center gap-1">
+        <p className="text-[10px] text-red-400 flex items-center gap-1">
           <AlertCircle className="h-3 w-3" />
           {error}
         </p>
@@ -157,10 +190,10 @@ function TriggerForm({ config, onChange, errors }: TriggerFormProps) {
             onChange({ ...config, eventType: value as TriggerConfig["eventType"] })
           }
         >
-          <SelectTrigger id="eventType">
+          <SelectTrigger id="eventType" className="bg-white/5 border-white/10 text-white">
             <SelectValue placeholder="Select event type" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#14141f] border-white/10">
             <SelectItem value="job_posting">New Job Posting</SelectItem>
             <SelectItem value="schedule">Scheduled Time</SelectItem>
             <SelectItem value="manual">Manual Trigger</SelectItem>
@@ -188,6 +221,7 @@ function TriggerForm({ config, onChange, errors }: TriggerFormProps) {
                 })
               }
               placeholder="0 9 * * *"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
             />
           </FormField>
           <FormField label="Timezone" htmlFor="timezone">
@@ -200,10 +234,10 @@ function TriggerForm({ config, onChange, errors }: TriggerFormProps) {
                 })
               }
             >
-              <SelectTrigger id="timezone">
+              <SelectTrigger id="timezone" className="bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Select timezone" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#14141f] border-white/10">
                 <SelectItem value="UTC">UTC</SelectItem>
                 <SelectItem value="America/New_York">Eastern Time</SelectItem>
                 <SelectItem value="America/Chicago">Central Time</SelectItem>
@@ -230,6 +264,7 @@ function TriggerForm({ config, onChange, errors }: TriggerFormProps) {
             onChange={(e) => onChange({ ...config, webhookUrl: e.target.value })}
             placeholder="https://..."
             readOnly
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </FormField>
       )}
@@ -249,6 +284,7 @@ function TriggerForm({ config, onChange, errors }: TriggerFormProps) {
               })
             }
             placeholder="react, typescript, senior"
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </FormField>
       )}
@@ -275,10 +311,10 @@ function ActionForm({ config, onChange, nodeTypeId }: ActionFormProps) {
                 onChange({ ...config, parameters: { ...config.parameters, template: value } })
               }
             >
-              <SelectTrigger id="template">
+              <SelectTrigger id="template" className="bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Select template" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#14141f] border-white/10">
                 <SelectItem value="default">Default Template</SelectItem>
                 <SelectItem value="modern">Modern</SelectItem>
                 <SelectItem value="classic">Classic</SelectItem>
@@ -294,10 +330,10 @@ function ActionForm({ config, onChange, nodeTypeId }: ActionFormProps) {
                 onChange({ ...config, parameters: { ...config.parameters, customization: value } })
               }
             >
-              <SelectTrigger id="customization">
+              <SelectTrigger id="customization" className="bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Select level" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#14141f] border-white/10">
                 <SelectItem value="minimal">Minimal - Keep original content</SelectItem>
                 <SelectItem value="balanced">Balanced - Moderate adjustments</SelectItem>
                 <SelectItem value="aggressive">Aggressive - Fully tailored</SelectItem>
@@ -316,10 +352,10 @@ function ActionForm({ config, onChange, nodeTypeId }: ActionFormProps) {
                 onChange({ ...config, parameters: { ...config.parameters, platform: value } })
               }
             >
-              <SelectTrigger id="platform">
+              <SelectTrigger id="platform" className="bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Select platform" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#14141f] border-white/10">
                 <SelectItem value="auto">Auto-detect</SelectItem>
                 <SelectItem value="linkedin">LinkedIn</SelectItem>
                 <SelectItem value="indeed">Indeed</SelectItem>
@@ -339,10 +375,10 @@ function ActionForm({ config, onChange, nodeTypeId }: ActionFormProps) {
                 })
               }
             >
-              <SelectTrigger id="credentials">
+              <SelectTrigger id="credentials" className="bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Select credentials" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#14141f] border-white/10">
                 <SelectItem value="linkedin-1">LinkedIn (john@example.com)</SelectItem>
                 <SelectItem value="indeed-1">Indeed (john@example.com)</SelectItem>
               </SelectContent>
@@ -359,10 +395,10 @@ function ActionForm({ config, onChange, nodeTypeId }: ActionFormProps) {
               onChange({ ...config, parameters: { ...config.parameters, emailTemplate: value } })
             }
           >
-            <SelectTrigger id="emailTemplate">
+            <SelectTrigger id="emailTemplate" className="bg-white/5 border-white/10 text-white">
               <SelectValue placeholder="Select template" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#14141f] border-white/10">
               <SelectItem value="follow-up">Follow-up</SelectItem>
               <SelectItem value="thank-you">Thank You</SelectItem>
               <SelectItem value="inquiry">Inquiry</SelectItem>
@@ -380,6 +416,7 @@ function ActionForm({ config, onChange, nodeTypeId }: ActionFormProps) {
           max={300}
           value={config.timeout || 30}
           onChange={(e) => onChange({ ...config, timeout: parseInt(e.target.value) || 30 })}
+          className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
         />
       </FormField>
     </div>
@@ -402,6 +439,7 @@ function ConditionForm({ config, onChange, errors }: ConditionFormProps) {
           value={config.field}
           onChange={(e) => onChange({ ...config, field: e.target.value })}
           placeholder="e.g., job.salary, job.title"
+          className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
         />
       </FormField>
 
@@ -412,10 +450,10 @@ function ConditionForm({ config, onChange, errors }: ConditionFormProps) {
             onChange({ ...config, operator: value as ConditionConfig["operator"] })
           }
         >
-          <SelectTrigger id="operator">
+          <SelectTrigger id="operator" className="bg-white/5 border-white/10 text-white">
             <SelectValue placeholder="Select operator" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#14141f] border-white/10">
             <SelectItem value="equals">Equals</SelectItem>
             <SelectItem value="not_equals">Not Equals</SelectItem>
             <SelectItem value="contains">Contains</SelectItem>
@@ -434,6 +472,7 @@ function ConditionForm({ config, onChange, errors }: ConditionFormProps) {
             value={config.value}
             onChange={(e) => onChange({ ...config, value: e.target.value })}
             placeholder="Enter comparison value"
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </FormField>
       )}
@@ -459,10 +498,10 @@ function OutputForm({ config, onChange, errors, nodeTypeId }: OutputFormProps) {
             onChange({ ...config, destination: value as OutputConfig["destination"] })
           }
         >
-          <SelectTrigger id="destination">
+          <SelectTrigger id="destination" className="bg-white/5 border-white/10 text-white">
             <SelectValue placeholder="Select destination" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#14141f] border-white/10">
             {nodeTypeId === "apply-to-job" && (
               <SelectItem value="apply">Submit Application</SelectItem>
             )}
@@ -481,10 +520,10 @@ function OutputForm({ config, onChange, errors, nodeTypeId }: OutputFormProps) {
             onChange({ ...config, format: value as OutputConfig["format"] })
           }
         >
-          <SelectTrigger id="format">
+          <SelectTrigger id="format" className="bg-white/5 border-white/10 text-white">
             <SelectValue placeholder="Select format" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#14141f] border-white/10">
             <SelectItem value="pdf">PDF</SelectItem>
             <SelectItem value="docx">Word Document (DOCX)</SelectItem>
             <SelectItem value="json">JSON</SelectItem>
@@ -500,6 +539,7 @@ function OutputForm({ config, onChange, errors, nodeTypeId }: OutputFormProps) {
             value={config.filename || ""}
             onChange={(e) => onChange({ ...config, filename: e.target.value })}
             placeholder="resume-{{date}}"
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </FormField>
       )}
@@ -517,6 +557,7 @@ function OutputForm({ config, onChange, errors, nodeTypeId }: OutputFormProps) {
             value={config.emailRecipient || ""}
             onChange={(e) => onChange({ ...config, emailRecipient: e.target.value })}
             placeholder="recipient@example.com"
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </FormField>
       )}
@@ -533,6 +574,7 @@ function OutputForm({ config, onChange, errors, nodeTypeId }: OutputFormProps) {
             value={config.webhookUrl || ""}
             onChange={(e) => onChange({ ...config, webhookUrl: e.target.value })}
             placeholder="https://..."
+            className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </FormField>
       )}
@@ -668,51 +710,66 @@ export function NodeConfigPanel({
   }
 
   const Icon = localNode.icon;
-
-  const categoryColors: Record<NodeCategory, string> = {
-    trigger: "node-trigger",
-    action: "node-action",
-    logic: "node-condition",
-    output: "node-output",
-  };
+  const colors = categoryColors[localNode.category];
 
   return (
     <div
       className={cn(
-        "flex flex-col h-full w-80 border-l border-border bg-card",
+        "flex flex-col h-full w-80",
         "animate-slide-in-right",
         className
       )}
+      style={{
+        background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+      }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div
+        className="flex items-center justify-between p-4"
+        style={{
+          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+        }}
+      >
         <div className="flex items-center gap-3">
           <div
-            className="flex items-center justify-center w-10 h-10 rounded-md"
+            className="flex items-center justify-center w-10 h-10 rounded-lg transition-transform duration-200"
             style={{
-              backgroundColor: `hsl(var(--${categoryColors[localNode.category]}) / 0.1)`,
+              background: colors.bg,
+              boxShadow: `0 0 20px ${colors.glow}`,
             }}
           >
             <Icon
               className="h-5 w-5"
-              style={{
-                color: `hsl(var(--${categoryColors[localNode.category]}))`,
-              }}
+              style={{ color: colors.text }}
             />
           </div>
           <div>
-            <Badge variant="outline" className="text-2xs">
-              {localNode.category.charAt(0).toUpperCase() + localNode.category.slice(1)}
+            <Badge
+              variant="outline"
+              className="text-[10px] uppercase tracking-wider"
+              style={{
+                background: colors.bg,
+                borderColor: colors.border,
+                color: colors.text,
+              }}
+            >
+              {localNode.category}
             </Badge>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close panel">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          aria-label="Close panel"
+          className="text-white/50 hover:text-white hover:bg-white/10"
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin">
         {/* Basic Info */}
         <div className="space-y-4">
           <FormField label="Title" htmlFor="nodeTitle" error={errors.title} required>
@@ -721,6 +778,7 @@ export function NodeConfigPanel({
               value={localNode.title}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Enter node title"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
             />
           </FormField>
 
@@ -731,13 +789,22 @@ export function NodeConfigPanel({
               onChange={(e) => handleDescriptionChange(e.target.value)}
               placeholder="Describe what this node does..."
               rows={3}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none"
             />
           </FormField>
         </div>
 
         {/* Type-specific configuration */}
-        <div className="pt-4 border-t border-border">
-          <h3 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-4">
+        <div
+          className="pt-4"
+          style={{
+            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+          }}
+        >
+          <h3
+            className="font-mono text-[10px] uppercase tracking-widest mb-4"
+            style={{ color: colors.text }}
+          >
             Configuration
           </h3>
 
@@ -777,9 +844,21 @@ export function NodeConfigPanel({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border space-y-3">
+      <div
+        className="p-4 space-y-3"
+        style={{
+          borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+          background: "rgba(255, 255, 255, 0.02)",
+        }}
+      >
         {isDirty && (
-          <div className="flex items-center gap-2 text-2xs text-warning">
+          <div
+            className="flex items-center gap-2 text-[10px] px-3 py-2 rounded-lg"
+            style={{
+              background: "rgba(245, 158, 11, 0.1)",
+              color: "#F59E0B",
+            }}
+          >
             <AlertCircle className="h-3 w-3" />
             <span>You have unsaved changes</span>
           </div>
@@ -789,17 +868,19 @@ export function NodeConfigPanel({
             variant="destructive"
             size="sm"
             onClick={handleDelete}
-            className="gap-1.5"
+            className="gap-1.5 bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Delete
           </Button>
           <Button
-            variant="default"
             size="sm"
             onClick={handleSave}
             disabled={!isDirty}
-            className="flex-1"
+            className="flex-1 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white border-0"
+            style={{
+              boxShadow: isDirty ? "0 0 20px rgba(139, 92, 246, 0.3)" : "none",
+            }}
           >
             Save Changes
           </Button>

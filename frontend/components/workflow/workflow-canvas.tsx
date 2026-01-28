@@ -24,24 +24,26 @@ import { workflowNodeTypes, type WorkflowNodeData } from "./workflow-node";
 import { workflowEdgeTypes } from "./workflow-edge";
 import { cn } from "@/lib/utils";
 
-// Default edge options
+// Default edge options with enhanced styling
 const defaultEdgeOptions = {
   type: "workflowEdge",
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    width: 16,
-    height: 16,
+    width: 20,
+    height: 20,
+    color: "hsl(var(--primary))",
   },
   data: {
     animated: true,
   },
 };
 
-// Connection line style
+// Connection line style - glowing effect
 const connectionLineStyle = {
-  stroke: "hsl(var(--primary))",
-  strokeWidth: 2,
-  strokeDasharray: "5 5",
+  stroke: "url(#connection-gradient)",
+  strokeWidth: 3,
+  strokeDasharray: "8 4",
+  filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.6))",
 };
 
 // Fit view options
@@ -50,15 +52,15 @@ const fitViewOptions = {
   maxZoom: 1.5,
 };
 
-// Minimap node color based on node type
+// Minimap node color based on node type - enhanced with glow colors
 const getMinimapNodeColor = (node: Node<WorkflowNodeData>) => {
   const colors: Record<string, string> = {
-    trigger: "hsl(var(--node-trigger))",
-    action: "hsl(var(--node-action))",
-    condition: "hsl(var(--node-condition))",
-    output: "hsl(var(--node-output))",
+    trigger: "hsl(38, 92%, 50%)",    // Amber
+    action: "hsl(262, 83%, 58%)",    // Purple
+    condition: "hsl(174, 84%, 45%)", // Teal
+    output: "hsl(142, 76%, 45%)",    // Green
   };
-  return colors[node.data?.type] || "hsl(var(--muted-foreground))";
+  return colors[node.data?.type] || "hsl(215, 20%, 45%)";
 };
 
 export interface WorkflowCanvasProps {
@@ -142,10 +144,21 @@ export function WorkflowCanvas({
   return (
     <div
       className={cn(
-        "w-full h-full bg-background rounded-lg border border-border overflow-hidden",
+        "workflow-canvas-wrapper w-full h-full overflow-hidden relative",
         className
       )}
     >
+      {/* Executive Noir background gradient */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse 80% 50% at 50% 50%, hsl(var(--primary) / 0.03) 0%, transparent 60%),
+            linear-gradient(180deg, #0a0a0f 0%, #12121a 50%, #0a0a0f 100%)
+          `,
+        }}
+      />
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -165,7 +178,7 @@ export function WorkflowCanvas({
         fitView
         fitViewOptions={fitViewOptions}
         snapToGrid
-        snapGrid={[16, 16]}
+        snapGrid={[20, 20]}
         deleteKeyCode={["Backspace", "Delete"]}
         multiSelectionKeyCode={["Meta", "Control"]}
         selectionKeyCode={["Shift"]}
@@ -174,49 +187,91 @@ export function WorkflowCanvas({
         proOptions={{
           hideAttribution: true,
         }}
-        className="workflow-canvas"
+        className="workflow-canvas-noir"
+        style={{
+          background: "transparent",
+        }}
       >
-        {/* Background Pattern */}
+        {/* SVG Defs for gradients and filters */}
+        <svg width="0" height="0" style={{ position: "absolute" }}>
+          <defs>
+            {/* Connection gradient */}
+            <linearGradient id="connection-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="hsl(262, 83%, 58%)" stopOpacity="0.8" />
+            </linearGradient>
+
+            {/* Glow filter */}
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+        </svg>
+
+        {/* Background Pattern - Subtle dot grid */}
         {showBackground && (
           <Background
             variant={BackgroundVariant.Dots}
-            gap={16}
-            size={1}
-            color="hsl(var(--muted-foreground) / 0.2)"
-            className="bg-background"
+            gap={24}
+            size={1.5}
+            color="hsl(220, 20%, 20%)"
+            className="!bg-transparent"
           />
         )}
 
-        {/* Zoom and Pan Controls */}
+        {/* Zoom and Pan Controls - Executive dark theme */}
         {showControls && (
           <Controls
             showZoom
             showFitView
             showInteractive={false}
             className={cn(
-              "[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground",
-              "[&>button:hover]:bg-muted [&>button]:rounded-md",
-              "[&>button]:shadow-sm"
+              "workflow-controls-noir",
+              "!bg-[#0d0d14]/90 !border !border-white/10 !rounded-xl !shadow-2xl !backdrop-blur-xl",
+              "[&>button]:!bg-transparent [&>button]:!border-0 [&>button]:!text-white/70",
+              "[&>button:hover]:!bg-white/10 [&>button:hover]:!text-white",
+              "[&>button]:!rounded-lg [&>button]:!m-1 [&>button]:!transition-all [&>button]:!duration-200",
+              "[&>button:hover]:!shadow-[0_0_12px_hsl(var(--primary)/0.3)]",
+              "[&>button>svg]:!fill-current"
             )}
+            style={{
+              boxShadow: "0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+            }}
           />
         )}
 
-        {/* Mini Map Overview */}
+        {/* Mini Map Overview - Executive dark theme */}
         {showMiniMap && (
           <MiniMap
             nodeColor={getMinimapNodeColor}
             nodeStrokeWidth={2}
-            nodeBorderRadius={4}
-            maskColor="hsl(var(--background) / 0.8)"
+            nodeBorderRadius={6}
+            maskColor="rgba(10, 10, 15, 0.85)"
             className={cn(
-              "bg-card border border-border rounded-lg shadow-md",
+              "workflow-minimap-noir",
+              "!bg-[#0d0d14]/90 !border !border-white/10 !rounded-xl !shadow-2xl !backdrop-blur-xl",
               "!bottom-4 !right-4"
             )}
+            style={{
+              boxShadow: "0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
+            }}
             pannable
             zoomable
           />
         )}
       </ReactFlow>
+
+      {/* Subtle vignette overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.3) 100%)",
+        }}
+      />
     </div>
   );
 }

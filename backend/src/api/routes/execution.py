@@ -381,15 +381,20 @@ async def _generate_execution_log_stream(
         return
 
     # Subscribe to real-time events via Redis Pub/Sub
+    # Use a polling approach with graceful fallback if Redis is unavailable
+    start_time = asyncio.get_event_loop().time()
+    last_heartbeat = start_time
+    timeout = 300.0  # 5 minute timeout
+    heartbeat_interval = 15.0
+    last_log_count = len(_execution_logs.get(str(execution_id), []))
+
     try:
         async with pubsub_context() as pubsub:
+            # Create a proper pubsub subscription
             channel = f"execution:{execution_id}"
-            await pubsub._redis.subscribe(channel)
-
-            start_time = asyncio.get_event_loop().time()
-            last_heartbeat = start_time
-            timeout = 300.0  # 5 minute timeout
-            heartbeat_interval = 15.0
+            pubsub._pubsub = pubsub._redis.pubsub()
+            await pubsub._pubsub.subscribe(channel)
+            logger.info(f"Subscribed to execution channel: {channel}")
 
             while True:
                 # Check timeout
@@ -407,6 +412,20 @@ async def _generate_execution_log_stream(
                     )
                     yield f"data: {heartbeat_event.to_sse_data()}\n\n"
                     last_heartbeat = current_time
+
+                # Check for new logs in the in-memory store (polling fallback)
+                current_logs = _execution_logs.get(str(execution_id), [])
+                if len(current_logs) > last_log_count:
+                    new_logs = current_logs[last_log_count:]
+                    for log in new_logs:
+                        log_event = ExecutionSSEEvent(
+                            event_type="log",
+                            execution_id=str(execution_id),
+                            timestamp=datetime.utcnow().isoformat(),
+                            data=log,
+                        )
+                        yield f"data: {log_event.to_sse_data()}\n\n"
+                    last_log_count = len(current_logs)
 
                 # Check for execution status changes
                 current_execution = _executions.get(str(execution_id))
@@ -428,17 +447,78 @@ async def _generate_execution_log_stream(
                     yield f"data: {done_event.to_sse_data()}\n\n"
                     break
 
-                await asyncio.sleep(1.0)
+                # Try to get message from Redis pubsub (non-blocking)
+                try:
+                    message = await asyncio.wait_for(
+                        pubsub._pubsub.get_message(ignore_subscribe_messages=True),
+                        timeout=0.5,
+                    )
+                    if message and message.get("type") == "message":
+                        # Forward the Redis message as an SSE event
+                        try:
+                            data = json.loads(message["data"])
+                            yield f"data: {json.dumps(data)}\n\n"
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+                except asyncio.TimeoutError:
+                    pass
+
+                await asyncio.sleep(0.5)
 
     except Exception as e:
-        logger.exception(f"SSE stream error for execution {execution_id}: {e}")
-        error_event = ExecutionSSEEvent(
-            event_type="error",
-            execution_id=str(execution_id),
-            timestamp=datetime.utcnow().isoformat(),
-            data={"error": "Stream connection error", "detail": str(e)},
-        )
-        yield f"data: {error_event.to_sse_data()}\n\n"
+        logger.warning(f"Redis subscription failed for execution {execution_id}, falling back to polling: {e}")
+        # Fallback to pure polling without Redis
+        while True:
+            current_time = asyncio.get_event_loop().time()
+            if current_time - start_time > timeout:
+                logger.info(f"SSE subscription timeout for execution {execution_id}")
+                break
+
+            # Send heartbeat if needed
+            if current_time - last_heartbeat > heartbeat_interval:
+                heartbeat_event = ExecutionSSEEvent(
+                    event_type="heartbeat",
+                    execution_id=str(execution_id),
+                    timestamp=datetime.utcnow().isoformat(),
+                )
+                yield f"data: {heartbeat_event.to_sse_data()}\n\n"
+                last_heartbeat = current_time
+
+            # Check for new logs
+            current_logs = _execution_logs.get(str(execution_id), [])
+            if len(current_logs) > last_log_count:
+                new_logs = current_logs[last_log_count:]
+                for log in new_logs:
+                    log_event = ExecutionSSEEvent(
+                        event_type="log",
+                        execution_id=str(execution_id),
+                        timestamp=datetime.utcnow().isoformat(),
+                        data=log,
+                    )
+                    yield f"data: {log_event.to_sse_data()}\n\n"
+                last_log_count = len(current_logs)
+
+            # Check for execution status changes
+            current_execution = _executions.get(str(execution_id))
+            if current_execution and current_execution.get("status") in [
+                ExecutionStatus.COMPLETED.value,
+                ExecutionStatus.FAILED.value,
+                ExecutionStatus.CANCELLED.value,
+            ]:
+                done_event = ExecutionSSEEvent(
+                    event_type="done" if current_execution.get("status") == ExecutionStatus.COMPLETED.value else "error",
+                    execution_id=str(execution_id),
+                    timestamp=datetime.utcnow().isoformat(),
+                    data={
+                        "status": current_execution.get("status"),
+                        "result": current_execution.get("result"),
+                        "error": current_execution.get("error_message"),
+                    },
+                )
+                yield f"data: {done_event.to_sse_data()}\n\n"
+                break
+
+            await asyncio.sleep(1.0)
 
 
 @router.get(

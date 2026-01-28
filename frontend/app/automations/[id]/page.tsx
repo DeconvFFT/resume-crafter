@@ -26,6 +26,7 @@ import {
   MoreVertical,
   Loader2,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,15 +78,21 @@ const ExecutionPanel = dynamic(
   }
 );
 
-// Lightweight skeleton components for dynamic imports
+// Executive Noir styled skeleton components
 function NodePanelSkeleton() {
   return (
-    <div className="w-64 bg-card border-r border-border p-4 space-y-4 shrink-0">
-      <Skeleton className="h-6 w-32" />
-      <Skeleton className="h-10 w-full" />
+    <div
+      className="w-64 shrink-0 p-4 space-y-4 border-r"
+      style={{
+        background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+        borderColor: "rgba(255,255,255,0.08)",
+      }}
+    >
+      <Skeleton className="h-6 w-32 bg-white/5" />
+      <Skeleton className="h-10 w-full bg-white/5" />
       <div className="space-y-2">
         {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
+          <Skeleton key={i} className="h-12 w-full bg-white/5" />
         ))}
       </div>
     </div>
@@ -94,23 +101,35 @@ function NodePanelSkeleton() {
 
 function ConfigPanelSkeleton() {
   return (
-    <div className="w-80 bg-card border-l border-border p-4 space-y-4">
-      <Skeleton className="h-6 w-40" />
-      <Skeleton className="h-10 w-full" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-10 w-full" />
+    <div
+      className="w-80 p-4 space-y-4 border-l"
+      style={{
+        background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+        borderColor: "rgba(255,255,255,0.08)",
+      }}
+    >
+      <Skeleton className="h-6 w-40 bg-white/5" />
+      <Skeleton className="h-10 w-full bg-white/5" />
+      <Skeleton className="h-24 w-full bg-white/5" />
+      <Skeleton className="h-10 w-full bg-white/5" />
     </div>
   );
 }
 
 function ExecutionPanelSkeleton() {
   return (
-    <div className="h-32 bg-card border-t border-border p-4">
+    <div
+      className="h-32 p-4 border-t"
+      style={{
+        background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+        borderColor: "rgba(255,255,255,0.08)",
+      }}
+    >
       <div className="flex items-center justify-between">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-6 w-32 bg-white/5" />
+        <Skeleton className="h-8 w-24 bg-white/5" />
       </div>
-      <Skeleton className="h-2 w-full mt-4" />
+      <Skeleton className="h-2 w-full mt-4 bg-white/5" />
     </div>
   );
 }
@@ -176,7 +195,7 @@ function campaignToWorkflowNodes(campaign: {
       data: {
         type: "condition" as const,
         title: "Filter Jobs",
-        description: campaign.min_salary 
+        description: campaign.min_salary
           ? `Salary >= $${campaign.min_salary.toLocaleString()}`
           : "Match score > 70%",
       },
@@ -608,7 +627,7 @@ export default function WorkflowBuilderPage() {
         // Trigger job discovery cron job
         const result = await triggerJobMutation.mutateAsync("job_discovery");
         toast.success("Workflow triggered! Job discovery started.");
-        
+
         // Note: In a full implementation, we'd get the execution ID from the trigger response
         // and use it to track real-time progress via SSE
         // setCurrentExecutionId(result.execution_id);
@@ -703,19 +722,47 @@ export default function WorkflowBuilderPage() {
   }, [stopExecution]);
 
   return (
-    <div className="fixed inset-0 top-14 left-0 flex flex-col bg-background overflow-hidden">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-border bg-card shrink-0">
+    <div className="fixed inset-0 top-14 left-0 flex flex-col overflow-hidden"
+      style={{
+        background: "linear-gradient(180deg, #0a0a0f 0%, #0d0d14 50%, #0a0a0f 100%)",
+      }}
+    >
+      {/* Top Bar - Executive Noir Header */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center justify-between h-14 px-4 shrink-0 border-b backdrop-blur-xl"
+        style={{
+          background: "linear-gradient(90deg, rgba(15, 15, 20, 0.95) 0%, rgba(20, 20, 30, 0.95) 50%, rgba(15, 15, 20, 0.95) 100%)",
+          borderColor: "rgba(255,255,255,0.08)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)",
+        }}
+      >
         {/* Left section */}
         <div className="flex items-center gap-4">
           <Link href="/automations">
-            <Button variant="ghost" size="icon" aria-label="Back to automations">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Back to automations"
+              className="text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
 
           {/* Workflow name */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex items-center justify-center w-8 h-8 rounded-lg"
+              style={{
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)",
+                boxShadow: "0 0 20px rgba(99, 102, 241, 0.2)",
+              }}
+            >
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
             {isEditingName ? (
               <Input
                 value={workflowName}
@@ -725,20 +772,23 @@ export default function WorkflowBuilderPage() {
                   if (e.key === "Enter") setIsEditingName(false);
                   if (e.key === "Escape") setIsEditingName(false);
                 }}
-                className="h-8 w-64 font-semibold"
+                className="h-8 w-64 font-semibold bg-white/5 border-white/10 text-white focus:border-primary/50"
                 autoFocus
               />
             ) : (
               <button
                 onClick={() => setIsEditingName(true)}
-                className="text-lg font-semibold hover:text-primary transition-colors"
+                className="text-lg font-semibold text-white/90 hover:text-white transition-colors"
                 aria-label={`Edit workflow name: ${workflowName}`}
               >
                 {workflowName}
               </button>
             )}
             {isNewWorkflow && (
-              <Badge variant="secondary" className="text-2xs">
+              <Badge
+                variant="outline"
+                className="text-[10px] uppercase tracking-wider border-amber-500/30 text-amber-400/90 bg-amber-500/10"
+              >
                 Draft
               </Badge>
             )}
@@ -746,13 +796,14 @@ export default function WorkflowBuilderPage() {
         </div>
 
         {/* Center section - History controls */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.03)" }}>
           <Button
             variant="ghost"
             size="icon"
             onClick={undo}
             disabled={!canUndo}
             aria-label="Undo"
+            className="text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-30 h-8 w-8"
           >
             <Undo2 className="h-4 w-4" />
           </Button>
@@ -762,6 +813,7 @@ export default function WorkflowBuilderPage() {
             onClick={redo}
             disabled={!canRedo}
             aria-label="Redo"
+            className="text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-30 h-8 w-8"
           >
             <Redo2 className="h-4 w-4" />
           </Button>
@@ -773,22 +825,34 @@ export default function WorkflowBuilderPage() {
           {isNewWorkflow && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Sparkles className="h-4 w-4" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-400" />
                   Load Sample
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Sample Workflows</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+              <DropdownMenuContent
+                align="end"
+                className="w-80 bg-[#14141f]/95 backdrop-blur-xl border-white/10"
+                style={{
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99, 102, 241, 0.1)",
+                }}
+              >
+                <DropdownMenuLabel className="text-white/70 text-xs uppercase tracking-wider">
+                  Sample Workflows
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/10" />
                 {sampleWorkflows.map((sample) => (
                   <DropdownMenuItem
                     key={sample.id}
                     onClick={() => handleLoadSampleWorkflow(sample)}
-                    className="flex flex-col items-start gap-1 cursor-pointer"
+                    className="flex flex-col items-start gap-1 cursor-pointer text-white/80 hover:bg-white/10 focus:bg-white/10"
                   >
                     <span className="font-medium">{sample.name}</span>
-                    <span className="text-xs text-muted-foreground line-clamp-2">
+                    <span className="text-xs text-white/50 line-clamp-2">
                       {sample.description}
                     </span>
                   </DropdownMenuItem>
@@ -801,7 +865,7 @@ export default function WorkflowBuilderPage() {
             size="sm"
             onClick={handleSave}
             disabled={isSaving}
-            className="gap-1.5"
+            className="gap-1.5 bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20"
           >
             {isSaving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -811,11 +875,13 @@ export default function WorkflowBuilderPage() {
             Save
           </Button>
           <Button
-            variant="default"
             size="sm"
             onClick={handleRun}
             disabled={isRunning || nodes.length === 0}
-            className="gap-1.5"
+            className="gap-1.5 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white border-0 shadow-lg"
+            style={{
+              boxShadow: "0 0 20px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(0,0,0,0.3)",
+            }}
           >
             {isRunning ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -824,21 +890,37 @@ export default function WorkflowBuilderPage() {
             )}
             Run
           </Button>
-          <Button variant="ghost" size="icon" aria-label="More options">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="More options"
+            className="text-white/50 hover:text-white hover:bg-white/10"
+          >
             <MoreVertical className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar - Node Panel */}
-        <NodePanel
+        <motion.div
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
           className="shrink-0"
-          onDragStart={(nodeType) => {
-            // Optional: track drag state
-          }}
-        />
+        >
+          <NodePanel
+            className="h-full border-r"
+            style={{
+              background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+              borderColor: "rgba(255,255,255,0.08)",
+            }}
+            onDragStart={(nodeType) => {
+              // Optional: track drag state
+            }}
+          />
+        </motion.div>
 
         {/* Center - Workflow Canvas */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -856,7 +938,7 @@ export default function WorkflowBuilderPage() {
             showMiniMap={true}
             showControls={true}
             showBackground={true}
-            className="flex-1 rounded-none border-0"
+            className="flex-1"
           />
 
           {/* Execution Panel (collapsible at bottom) */}
@@ -866,7 +948,11 @@ export default function WorkflowBuilderPage() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                style={{
+                  background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                }}
               >
                 <ExecutionPanel
                   execution={execution}
@@ -883,13 +969,19 @@ export default function WorkflowBuilderPage() {
 
           {/* Toggle execution panel button (when collapsed) */}
           {!showExecutionPanel && (
-            <button
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               onClick={() => setShowExecutionPanel(true)}
-              className="flex items-center justify-center gap-2 h-10 border-t border-border bg-card hover:bg-accent/50 transition-colors text-sm text-muted-foreground"
+              className="flex items-center justify-center gap-2 h-10 text-sm text-white/50 hover:text-white/80 transition-all duration-200"
+              style={{
+                background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+                borderTop: "1px solid rgba(255,255,255,0.08)",
+              }}
             >
               <ChevronUp className="h-4 w-4" />
               Show Execution Panel
-            </button>
+            </motion.button>
           )}
         </div>
 
@@ -900,8 +992,12 @@ export default function WorkflowBuilderPage() {
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="shrink-0 overflow-hidden"
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="shrink-0 overflow-hidden border-l"
+              style={{
+                background: "linear-gradient(180deg, rgba(15, 15, 20, 0.98) 0%, rgba(10, 10, 15, 0.98) 100%)",
+                borderColor: "rgba(255,255,255,0.08)",
+              }}
             >
               <NodeConfigPanel
                 node={selectedNodeConfig}

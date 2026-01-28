@@ -112,11 +112,22 @@ class PubSubService:
         self._pubsub: redis.client.PubSub | None = None
 
     async def connect(self) -> None:
-        """Connect to Redis."""
+        """Connect to Redis.
+
+        Raises:
+            ConnectionError: If Redis connection fails.
+        """
         if self._redis is None:
             params = _parse_redis_url()
-            self._redis = redis.Redis(**params, decode_responses=True)
-            logger.debug(f"Connected to Redis at {params['host']}:{params['port']}")
+            try:
+                self._redis = redis.Redis(**params, decode_responses=True)
+                # Test the connection with a ping
+                await self._redis.ping()
+                logger.debug(f"Connected to Redis at {params['host']}:{params['port']}")
+            except (redis.ConnectionError, redis.TimeoutError, OSError) as e:
+                self._redis = None
+                logger.error(f"Failed to connect to Redis at {params['host']}:{params['port']}: {e}")
+                raise ConnectionError(f"Redis connection failed: {e}") from e
 
     async def disconnect(self) -> None:
         """Disconnect from Redis."""
@@ -191,17 +202,25 @@ class PubSubService:
 
         Yields:
             DocumentEvent objects as they arrive.
+
+        Raises:
+            RuntimeError: If PubSubService is not connected.
+            ConnectionError: If Redis subscription fails.
         """
         if self._redis is None:
             raise RuntimeError("PubSubService not connected")
 
         channel = _get_channel_name(document_id)
-        self._pubsub = self._redis.pubsub()
 
         try:
+            self._pubsub = self._redis.pubsub()
             await self._pubsub.subscribe(channel)
             logger.info(f"Subscribed to channel: {channel}")
+        except (redis.ConnectionError, redis.TimeoutError, OSError) as e:
+            logger.error(f"Failed to subscribe to channel {channel}: {e}")
+            raise ConnectionError(f"Redis subscription failed: {e}") from e
 
+        try:
             start_time = asyncio.get_event_loop().time()
             last_heartbeat = start_time
 
@@ -229,6 +248,16 @@ class PubSubService:
                     )
                 except asyncio.TimeoutError:
                     continue
+                except (redis.ConnectionError, redis.TimeoutError) as e:
+                    logger.warning(f"Redis connection error during subscription: {e}")
+                    # Yield an error event and break
+                    yield DocumentEvent(
+                        event_type=EventType.ERROR,
+                        document_id=str(document_id),
+                        timestamp=datetime.utcnow().isoformat(),
+                        data={"error": "Redis connection lost", "detail": str(e)},
+                    )
+                    break
 
                 if message is None:
                     continue
@@ -251,7 +280,11 @@ class PubSubService:
                     continue
 
         finally:
-            await self._pubsub.unsubscribe(channel)
+            try:
+                if self._pubsub:
+                    await self._pubsub.unsubscribe(channel)
+            except (redis.ConnectionError, redis.TimeoutError, OSError) as e:
+                logger.warning(f"Error unsubscribing from channel {channel}: {e}")
             logger.info(f"Unsubscribed from channel: {channel}")
 
 

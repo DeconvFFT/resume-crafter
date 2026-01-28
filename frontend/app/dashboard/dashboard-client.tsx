@@ -6,6 +6,8 @@ import { api } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/stores/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   FileText,
   Briefcase,
@@ -27,6 +29,7 @@ import {
   Activity,
   BarChart3,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,48 +53,171 @@ function formatRelativeTime(dateStr: string): string {
   });
 }
 
+// Animated counter hook
+function useAnimatedCounter(end: number, duration: number = 1000) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTime: number;
+    let animationFrame: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+
+      // Easing function for smooth animation
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      setCount(Math.floor(easeOutQuart * end));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [end, duration]);
+
+  return count;
+}
+
+// Stagger animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
+const cardHoverVariants = {
+  rest: { scale: 1 },
+  hover: {
+    scale: 1.02,
+    transition: { type: "spring" as const, stiffness: 400, damping: 17 }
+  },
+};
+
 function StatCard({
   label,
   value,
   icon: Icon,
   suffix,
   loading,
+  index = 0,
+  gradient = "from-violet-500/20 to-purple-500/20",
+  iconGradient = "from-violet-500 to-purple-500",
 }: {
   label: string;
   value: number | string;
   icon: React.ElementType;
   suffix?: string;
   loading?: boolean;
+  index?: number;
+  gradient?: string;
+  iconGradient?: string;
 }) {
+  const numericValue = typeof value === "number" ? value : parseInt(value) || 0;
+  const animatedValue = useAnimatedCounter(numericValue, 1200);
+
   if (loading) {
     return (
-      <div className="simple-card">
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
         <div className="flex items-center justify-between mb-3">
-          <Skeleton className="h-8 w-8 rounded-lg" />
-          <Skeleton className="h-6 w-16" />
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <Skeleton className="h-8 w-20" />
         </div>
-        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-28" />
       </div>
     );
   }
 
   return (
-    <div className="simple-card group hover:border-primary/30 transition-all duration-200">
-      <div className="flex items-center justify-between mb-3">
-        <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-          <Icon className="h-4 w-4" />
-        </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold">{value}</span>
-          {suffix && (
-            <span className="text-sm text-muted-foreground">{suffix}</span>
+    <motion.div
+      variants={itemVariants}
+      initial="hidden"
+      animate="visible"
+      whileHover="hover"
+      className="group relative"
+      custom={index}
+    >
+      <motion.div
+        variants={cardHoverVariants}
+        className={cn(
+          "relative overflow-hidden rounded-xl",
+          "border border-white/10 bg-white/5 backdrop-blur-xl",
+          "p-6 transition-all duration-500",
+          "hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10"
+        )}
+      >
+        {/* Gradient background on hover */}
+        <div
+          className={cn(
+            "absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100",
+            `bg-gradient-to-br ${gradient}`
           )}
+        />
+
+        {/* Content */}
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            {/* Icon with gradient glow */}
+            <div className="relative">
+              <div
+                className={cn(
+                  "absolute inset-0 blur-xl opacity-50 group-hover:opacity-75 transition-opacity",
+                  `bg-gradient-to-r ${iconGradient}`
+                )}
+              />
+              <div
+                className={cn(
+                  "relative p-3 rounded-xl",
+                  "bg-gradient-to-br from-white/10 to-white/5",
+                  "border border-white/10 group-hover:border-white/20 transition-colors"
+                )}
+              >
+                <Icon className={cn("h-5 w-5 bg-gradient-to-r bg-clip-text", iconGradient)} style={{ color: 'rgb(139, 92, 246)' }} />
+              </div>
+            </div>
+
+            {/* Value */}
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                {typeof value === "number" ? animatedValue : value}
+              </span>
+              {suffix && (
+                <span className="text-lg text-violet-300/80 font-medium">
+                  {suffix}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-white/60 font-medium tracking-wide">
+              {label}
+            </span>
+            <TrendingUp className="h-4 w-4 text-violet-400/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
         </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -103,59 +229,93 @@ interface Campaign {
   next_run_at: string | null;
 }
 
-function CampaignCard({ campaign }: { campaign: Campaign }) {
+function CampaignCard({ campaign, index }: { campaign: Campaign; index: number }) {
   const isActive = campaign.status === "active";
 
   return (
-    <Link
-      href={`/automations?campaign=${campaign.id}`}
-      className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:border-primary/30 transition-all group"
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
     >
-      <div
+      <Link
+        href={`/automations?campaign=${campaign.id}`}
         className={cn(
-          "p-2 rounded-lg",
-          isActive
-            ? "bg-green-500/10 text-green-600"
-            : "bg-muted text-muted-foreground"
+          "group relative flex items-center gap-4 p-4 rounded-xl overflow-hidden",
+          "border border-white/10 bg-white/5 backdrop-blur-sm",
+          "transition-all duration-300",
+          "hover:border-violet-500/30 hover:bg-white/[0.07]"
         )}
       >
-        {isActive ? (
-          <Play className="h-4 w-4" />
-        ) : (
-          <Pause className="h-4 w-4" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className="font-medium truncate">{campaign.name}</h4>
-          <span
+        {/* Gradient border effect on hover */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-r from-violet-500/20 via-purple-500/20 to-violet-500/20" />
+          <div className="absolute inset-[1px] rounded-[10px] bg-card" />
+        </div>
+
+        {/* Status indicator with glow */}
+        <div className="relative">
+          <div
             className={cn(
-              "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize",
+              "absolute inset-0 blur-md transition-opacity",
+              isActive ? "bg-emerald-500/50 opacity-50" : "opacity-0"
+            )}
+          />
+          <div
+            className={cn(
+              "relative p-2.5 rounded-lg transition-colors",
               isActive
-                ? "bg-green-500/10 text-green-600"
-                : "bg-muted text-muted-foreground"
+                ? "bg-emerald-500/20 text-emerald-400"
+                : "bg-white/10 text-white/40"
             )}
           >
-            {campaign.status}
-          </span>
+            {isActive ? (
+              <Play className="h-4 w-4" />
+            ) : (
+              <Pause className="h-4 w-4" />
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-          {campaign.last_run_at && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Last: {formatRelativeTime(campaign.last_run_at)}
+
+        <div className="relative flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-white/90 truncate group-hover:text-white transition-colors">
+              {campaign.name}
+            </h4>
+            <span
+              className={cn(
+                "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize",
+                "border backdrop-blur-sm",
+                isActive
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  : "border-white/20 bg-white/5 text-white/50"
+              )}
+            >
+              {isActive && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />
+              )}
+              {campaign.status}
             </span>
-          )}
-          {campaign.next_run_at && (
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              Next: {formatRelativeTime(campaign.next_run_at)}
-            </span>
-          )}
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-xs text-white/40">
+            {campaign.last_run_at && (
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3 w-3" />
+                Last: {formatRelativeTime(campaign.last_run_at)}
+              </span>
+            )}
+            {campaign.next_run_at && (
+              <span className="flex items-center gap-1.5">
+                <Calendar className="h-3 w-3" />
+                Next: {formatRelativeTime(campaign.next_run_at)}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-    </Link>
+
+        <ChevronRight className="relative h-4 w-4 text-white/20 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
+      </Link>
+    </motion.div>
   );
 }
 
@@ -168,42 +328,66 @@ interface Execution {
   results?: Record<string, unknown>;
 }
 
-function ExecutionItem({ execution }: { execution: Execution }) {
-  const statusIcons: Record<string, React.ElementType> = {
-    completed: CheckCircle2,
-    running: Activity,
-    failed: AlertCircle,
-    pending: Clock,
-  };
-  const statusColors: Record<string, string> = {
-    completed: "text-green-600 bg-green-500/10",
-    running: "text-blue-600 bg-blue-500/10",
-    failed: "text-red-600 bg-red-500/10",
-    pending: "text-amber-600 bg-amber-500/10",
+function ExecutionItem({ execution, index }: { execution: Execution; index: number }) {
+  const statusConfig: Record<string, { icon: React.ElementType; color: string; glowColor: string }> = {
+    completed: { icon: CheckCircle2, color: "text-emerald-400 bg-emerald-500/20", glowColor: "bg-emerald-500/30" },
+    running: { icon: Activity, color: "text-blue-400 bg-blue-500/20", glowColor: "bg-blue-500/30" },
+    failed: { icon: AlertCircle, color: "text-red-400 bg-red-500/20", glowColor: "bg-red-500/30" },
+    pending: { icon: Clock, color: "text-amber-400 bg-amber-500/20", glowColor: "bg-amber-500/30" },
   };
 
-  const Icon = statusIcons[execution.status] || Clock;
-  const colorClass = statusColors[execution.status] || statusColors.pending;
+  const config = statusConfig[execution.status] || statusConfig.pending;
+  const Icon = config.icon;
 
   const timestamp = execution.completed_at || execution.started_at;
   const workflowName = execution.workflow_type || "Workflow";
 
   return (
-    <div className="flex items-start gap-3 py-3">
-      <div className={cn("p-2 rounded-lg shrink-0", colorClass)}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">
-          {workflowName} - {execution.status}
-        </p>
-        {timestamp && (
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {formatRelativeTime(timestamp)}
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.08, type: "spring", stiffness: 100 }}
+      className="relative group"
+    >
+      {/* Timeline connector line */}
+      {index > 0 && (
+        <div className="absolute -top-3 left-5 w-0.5 h-3 bg-gradient-to-b from-white/10 to-transparent" />
+      )}
+
+      <div className="flex items-start gap-4 py-3 px-2 rounded-lg hover:bg-white/5 transition-colors">
+        {/* Icon with glow */}
+        <div className="relative shrink-0">
+          <div className={cn("absolute inset-0 blur-md opacity-50", config.glowColor)} />
+          <div className={cn("relative p-2 rounded-lg", config.color)}>
+            <Icon className="h-4 w-4" />
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-white/90 truncate">
+            {workflowName}
           </p>
-        )}
+          <div className="flex items-center gap-2 mt-1">
+            <span className={cn(
+              "text-xs capitalize",
+              execution.status === "completed" ? "text-emerald-400" :
+              execution.status === "running" ? "text-blue-400" :
+              execution.status === "failed" ? "text-red-400" : "text-amber-400"
+            )}>
+              {execution.status}
+            </span>
+            {timestamp && (
+              <>
+                <span className="text-white/20">-</span>
+                <span className="text-xs text-white/40">
+                  {formatRelativeTime(timestamp)}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -212,25 +396,99 @@ function QuickActionCard({
   description,
   icon: Icon,
   href,
+  gradient = "from-violet-500 to-purple-500",
+  index = 0,
 }: {
   title: string;
   description: string;
   icon: React.ElementType;
   href: string;
+  gradient?: string;
+  index?: number;
 }) {
   return (
-    <Link
-      href={href}
-      className="simple-card group hover:border-primary/30 hover:shadow-md transition-all duration-200"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 + index * 0.1, type: "spring", stiffness: 100 }}
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
     >
-      <div className="p-2 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors w-fit mb-4">
-        <Icon className="h-5 w-5" />
+      <Link
+        href={href}
+        className={cn(
+          "group relative flex flex-col p-6 rounded-xl overflow-hidden",
+          "border border-white/10 bg-white/5 backdrop-blur-sm",
+          "transition-all duration-300",
+          "hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10"
+        )}
+      >
+        {/* Gradient background on hover */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-violet-500/10 to-purple-500/10" />
+
+        {/* Icon with animation */}
+        <div className="relative mb-4">
+          <div className={cn(
+            "absolute inset-0 blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-300",
+            `bg-gradient-to-r ${gradient}`
+          )} />
+          <div className={cn(
+            "relative p-3 rounded-xl w-fit",
+            "bg-gradient-to-br from-white/10 to-white/5",
+            "border border-white/10 group-hover:border-white/20",
+            "transition-all duration-300 group-hover:scale-110"
+          )}>
+            <Icon className="h-5 w-5 text-violet-400 group-hover:text-violet-300 transition-colors" />
+          </div>
+        </div>
+
+        <h3 className="relative font-semibold text-white/90 group-hover:text-white transition-colors">
+          {title}
+        </h3>
+        <p className="relative text-sm text-white/50 mt-1.5 group-hover:text-white/60 transition-colors">
+          {description}
+        </p>
+
+        {/* Arrow indicator */}
+        <ArrowRight className="absolute bottom-6 right-6 h-4 w-4 text-white/20 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+      </Link>
+    </motion.div>
+  );
+}
+
+// Section header component
+function SectionHeader({
+  icon: Icon,
+  title,
+  action,
+  actionHref
+}: {
+  icon: React.ElementType;
+  title: string;
+  action?: string;
+  actionHref?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-violet-500/20">
+          <Icon className="h-4 w-4 text-violet-400" />
+        </div>
+        <div>
+          <h2 className="font-semibold text-white/90">{title}</h2>
+          <div className="h-0.5 w-8 mt-1.5 bg-gradient-to-r from-violet-500 to-transparent rounded-full" />
+        </div>
       </div>
-      <h3 className="font-medium group-hover:text-primary transition-colors">
-        {title}
-      </h3>
-      <p className="text-sm text-muted-foreground mt-1">{description}</p>
-    </Link>
+      {action && actionHref && (
+        <Link
+          href={actionHref}
+          className="group flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+        >
+          {action}
+          <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -318,171 +576,269 @@ export default function DashboardClient() {
   );
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Welcome back, {userName}</h1>
-          <p className="text-muted-foreground mt-1">
-            Here is what is happening with your job search today.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/resume">
-            <FileOutput className="h-4 w-4 mr-2" />
-            Generate Resume
-          </Link>
-        </Button>
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-4">
-        <StatCard
-          label="Profile Completion"
-          value={profileCompletion}
-          suffix="%"
-          icon={BarChart3}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Documents"
-          value={documentsCount}
-          icon={FileText}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Experiences"
-          value={experiencesCount}
-          icon={Briefcase}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Active Campaigns"
-          value={activeCampaigns}
-          icon={Zap}
-          loading={campaignsLoading}
+    <div className="relative min-h-screen">
+      {/* Background gradient mesh */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-violet-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-purple-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 h-1/3 bg-indigo-500/5 rounded-full blur-[100px]" />
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }}
         />
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-5 gap-6">
-        {/* Left Column - Automations + Quick Actions */}
-        <div className="col-span-3 space-y-6">
-          {/* Active Campaigns */}
-          <div className="simple-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold">Search Campaigns</h2>
-              </div>
-              <Link
-                href="/automations"
-                className="text-sm text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
-              >
-                View all
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            {campaignsLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full rounded-lg" />
-                <Skeleton className="h-20 w-full rounded-lg" />
-              </div>
-            ) : campaignsList.length > 0 ? (
-              <div className="space-y-3">
-                {campaignsList.slice(0, 3).map((campaign: Campaign) => (
-                  <CampaignCard key={campaign.id} campaign={campaign} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 border border-dashed border-border rounded-lg">
-                <Zap className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-                <h3 className="font-medium">No campaigns yet</h3>
-                <p className="text-sm text-muted-foreground mt-1 mb-4">
-                  Create a search campaign to automate your job search
-                </p>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/automations">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Create your first campaign
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Quick Actions Grid */}
+      <div className="relative space-y-8 p-1">
+        {/* Welcome Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, type: "spring" }}
+          className="flex items-start justify-between"
+        >
           <div>
-            <h2 className="font-semibold mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <QuickActionCard
-                title="Generate Resume"
-                description="Create a tailored resume for a job"
-                icon={FileOutput}
-                href="/resume"
-              />
-              <QuickActionCard
-                title="Add Job"
-                description="Analyze a new job posting"
-                icon={Target}
-                href="/jobs"
-              />
-              <QuickActionCard
-                title="Update Profile"
-                description="Add experiences and skills"
-                icon={User}
-                href="/experiences"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Activity Feed */}
-        <div className="col-span-2">
-          <div className="simple-card h-fit">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                <h2 className="font-semibold">Recent Activity</h2>
-              </div>
-              <Link
-                href="/automations/executions"
-                className="text-sm text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
+            <div className="flex items-center gap-3 mb-2">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               >
-                View all
-                <ArrowRight className="h-3 w-3" />
-              </Link>
+                <Sparkles className="h-6 w-6 text-violet-400" />
+              </motion.div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
+                Welcome back, {userName}
+              </h1>
             </div>
-
-            {executionsLoading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : executionsList.length > 0 ? (
-              <div className="divide-y divide-border">
-                {executionsList.map((execution: Execution) => (
-                  <ExecutionItem key={execution.id} execution={execution} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Clock className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-                <h3 className="font-medium">No activity yet</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Activity will appear here when you run automations
-                </p>
-              </div>
-            )}
+            <p className="text-white/50 text-lg">
+              Here is what is happening with your job search today.
+            </p>
           </div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button
+              asChild
+              className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 border-0 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300"
+            >
+              <Link href="/resume" className="gap-2">
+                <FileOutput className="h-4 w-4" />
+                Generate Resume
+              </Link>
+            </Button>
+          </motion.div>
+        </motion.div>
+
+        {/* Stats Row */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-4 gap-5"
+        >
+          <StatCard
+            label="Profile Completion"
+            value={profileCompletion}
+            suffix="%"
+            icon={BarChart3}
+            loading={isLoading}
+            index={0}
+            gradient="from-violet-500/20 to-purple-500/20"
+            iconGradient="from-violet-500 to-purple-500"
+          />
+          <StatCard
+            label="Documents"
+            value={documentsCount}
+            icon={FileText}
+            loading={isLoading}
+            index={1}
+            gradient="from-blue-500/20 to-cyan-500/20"
+            iconGradient="from-blue-500 to-cyan-500"
+          />
+          <StatCard
+            label="Experiences"
+            value={experiencesCount}
+            icon={Briefcase}
+            loading={isLoading}
+            index={2}
+            gradient="from-emerald-500/20 to-teal-500/20"
+            iconGradient="from-emerald-500 to-teal-500"
+          />
+          <StatCard
+            label="Active Campaigns"
+            value={activeCampaigns}
+            icon={Zap}
+            loading={campaignsLoading}
+            index={3}
+            gradient="from-amber-500/20 to-orange-500/20"
+            iconGradient="from-amber-500 to-orange-500"
+          />
+        </motion.div>
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-5 gap-6">
+          {/* Left Column - Automations + Quick Actions */}
+          <div className="col-span-3 space-y-6">
+            {/* Active Campaigns */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-6"
+            >
+              <SectionHeader
+                icon={Activity}
+                title="Search Campaigns"
+                action="View all"
+                actionHref="/automations"
+              />
+
+              {campaignsLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                </div>
+              ) : campaignsList.length > 0 ? (
+                <div className="space-y-3">
+                  {campaignsList.slice(0, 3).map((campaign: Campaign, index: number) => (
+                    <CampaignCard key={campaign.id} campaign={campaign} index={index} />
+                  ))}
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-center py-10 border border-dashed border-white/10 rounded-xl bg-white/[0.02]"
+                >
+                  <div className="relative inline-block mb-4">
+                    <div className="absolute inset-0 blur-xl bg-violet-500/30" />
+                    <Zap className="relative h-12 w-12 text-violet-400" />
+                  </div>
+                  <h3 className="font-semibold text-white/90">No campaigns yet</h3>
+                  <p className="text-sm text-white/50 mt-2 mb-5">
+                    Create a search campaign to automate your job search
+                  </p>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 hover:text-violet-200"
+                  >
+                    <Link href="/automations">
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      Create your first campaign
+                    </Link>
+                  </Button>
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Quick Actions Grid */}
+            <div>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="p-2 rounded-lg bg-violet-500/20">
+                  <Sparkles className="h-4 w-4 text-violet-400" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-white/90">Quick Actions</h2>
+                  <div className="h-0.5 w-8 mt-1.5 bg-gradient-to-r from-violet-500 to-transparent rounded-full" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <QuickActionCard
+                  title="Generate Resume"
+                  description="Create a tailored resume for a job"
+                  icon={FileOutput}
+                  href="/resume"
+                  gradient="from-violet-500 to-purple-500"
+                  index={0}
+                />
+                <QuickActionCard
+                  title="Add Job"
+                  description="Analyze a new job posting"
+                  icon={Target}
+                  href="/jobs"
+                  gradient="from-blue-500 to-cyan-500"
+                  index={1}
+                />
+                <QuickActionCard
+                  title="Update Profile"
+                  description="Add experiences and skills"
+                  icon={User}
+                  href="/experiences"
+                  gradient="from-emerald-500 to-teal-500"
+                  index={2}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Activity Feed */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="col-span-2"
+          >
+            <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 h-fit sticky top-6">
+              <SectionHeader
+                icon={Clock}
+                title="Recent Activity"
+                action="View all"
+                actionHref="/automations/executions"
+              />
+
+              {executionsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <Skeleton className="h-10 w-10 rounded-lg shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : executionsList.length > 0 ? (
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-5 top-6 bottom-6 w-0.5 bg-gradient-to-b from-violet-500/30 via-white/10 to-transparent" />
+
+                  <div className="space-y-1">
+                    {executionsList.map((execution: Execution, index: number) => (
+                      <ExecutionItem key={execution.id} execution={execution} index={index} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-center py-10"
+                >
+                  <div className="relative inline-block mb-4">
+                    <div className="absolute inset-0 blur-xl bg-white/10" />
+                    <Clock className="relative h-12 w-12 text-white/30" />
+                  </div>
+                  <h3 className="font-medium text-white/70">No activity yet</h3>
+                  <p className="text-sm text-white/40 mt-2">
+                    Activity will appear here when you run automations
+                  </p>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>
