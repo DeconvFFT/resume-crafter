@@ -315,6 +315,13 @@ class CronJobListResponse(BaseModel):
     items: list[CronJobResponse]
 
 
+class CronJobTriggerResponse(BaseModel):
+    """Response when triggering a cron job - includes execution tracking ID."""
+
+    job: CronJobResponse
+    execution_id: str = Field(description="ID to track this execution in real-time")
+
+
 class CronJobSchedule(BaseModel):
     """Cron job schedule configuration."""
 

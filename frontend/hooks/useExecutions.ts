@@ -293,9 +293,10 @@ export function useTriggerCronJob() {
       return api.automation.cronJobs.trigger(accessToken, jobType);
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(cronJobKeys.detail(data.job_type), data);
+      // data now contains { job: CronJobResponse, execution_id: string }
+      queryClient.setQueryData(cronJobKeys.detail(data.job.job_type), data.job);
       queryClient.invalidateQueries({ queryKey: cronJobKeys.list() });
-      // Also refresh executions since a new one might have been created
+      // Also refresh executions since a new one was created
       queryClient.invalidateQueries({ queryKey: executionKeys.lists() });
     },
     onError: handleApiError,

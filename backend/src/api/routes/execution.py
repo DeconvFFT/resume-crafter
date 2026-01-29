@@ -63,6 +63,290 @@ _execution_steps: dict[str, list[dict]] = {}
 _execution_logs: dict[str, list[dict]] = {}
 
 
+def create_execution(
+    user_id: str,
+    workflow_type: str,
+    workflow_name: str | None = None,
+    campaign_id: str | None = None,
+    entity_id: str | None = None,
+) -> dict:
+    """Create a new execution record.
+
+    This is called when a workflow is triggered to create a trackable execution.
+    Returns the execution dict with the generated ID.
+    """
+    from uuid import uuid4
+
+    execution_id = str(uuid4())
+    now = datetime.utcnow().isoformat()
+
+    # Define steps based on workflow type
+    steps = []
+    if workflow_type == "job_discovery":
+        step_definitions = [
+            ("discover", "Job Discovery", "Searching job boards for matching positions"),
+            ("filter", "Filter Results", "Applying campaign filters to results"),
+            ("deduplicate", "Deduplicate", "Removing duplicate job postings"),
+            ("store", "Store Jobs", "Saving discovered jobs to database"),
+        ]
+    elif workflow_type == "job_analysis":
+        step_definitions = [
+            ("load", "Load Jobs", "Loading unanalyzed jobs"),
+            ("analyze", "Analyze Match", "Scoring jobs against profile"),
+            ("rank", "Rank Results", "Ranking jobs by match score"),
+            ("store", "Update Jobs", "Saving analysis results"),
+        ]
+    elif workflow_type == "application_queue":
+        step_definitions = [
+            ("fetch", "Fetch Queue", "Getting pending applications"),
+            ("prepare", "Prepare Materials", "Generating resumes and cover letters"),
+            ("submit", "Submit Applications", "Submitting to job portals"),
+            ("track", "Track Status", "Recording application status"),
+        ]
+    else:
+        step_definitions = [
+            ("execute", "Execute", "Running workflow"),
+        ]
+
+    for i, (step_id, name, desc) in enumerate(step_definitions):
+        steps.append({
+            "id": f"{execution_id}-step-{i}",
+            "execution_id": execution_id,
+            "step_index": i,
+            "step_id": step_id,
+            "name": name,
+            "description": desc,
+            "status": "pending",
+            "started_at": None,
+            "completed_at": None,
+            "duration_ms": None,
+            "output": None,
+            "error_message": None,
+        })
+
+    execution = {
+        "id": execution_id,
+        "user_id": user_id,
+        "workflow_type": workflow_type,
+        "workflow_name": workflow_name or workflow_type.replace("_", " ").title(),
+        "status": "running",
+        "progress": 0,
+        "current_step": 0,
+        "total_steps": len(steps),
+        "started_at": now,
+        "completed_at": None,
+        "duration_ms": None,
+        "result": None,
+        "error_message": None,
+        "campaign_id": campaign_id,
+        "entity_id": entity_id,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    _executions[execution_id] = execution
+    _execution_steps[execution_id] = steps
+    _execution_logs[execution_id] = []
+
+    # Add initial log
+    _execution_logs[execution_id].append({
+        "id": f"{execution_id}-log-0",
+        "execution_id": execution_id,
+        "step_id": None,
+        "level": "info",
+        "message": f"Execution started: {workflow_name or workflow_type}",
+        "data": {"workflow_type": workflow_type, "campaign_id": campaign_id},
+        "timestamp": now,
+    })
+
+    logger.info(f"Created execution {execution_id} for {workflow_type}")
+    return execution
+
+
+def update_execution_progress(
+    execution_id: str,
+    step_index: int,
+    status: str = "running",
+    output: dict | None = None,
+    error: str | None = None,
+) -> None:
+    """Update execution step progress.
+
+    Called by ARQ tasks to report progress.
+    """
+    if execution_id not in _executions:
+        logger.warning(f"Execution {execution_id} not found for progress update")
+        return
+
+    execution = _executions[execution_id]
+    steps = _execution_steps.get(execution_id, [])
+    now = datetime.utcnow().isoformat()
+
+    if step_index < len(steps):
+        step = steps[step_index]
+
+        if status == "running" and step["status"] == "pending":
+            step["status"] = "running"
+            step["started_at"] = now
+        elif status == "completed":
+            step["status"] = "completed"
+            step["completed_at"] = now
+            if step["started_at"]:
+                start = datetime.fromisoformat(step["started_at"])
+                end = datetime.fromisoformat(now)
+                step["duration_ms"] = int((end - start).total_seconds() * 1000)
+            step["output"] = output
+        elif status == "failed":
+            step["status"] = "failed"
+            step["completed_at"] = now
+            step["error_message"] = error
+
+    # Update overall execution progress
+    completed_steps = sum(1 for s in steps if s["status"] == "completed")
+    execution["progress"] = int((completed_steps / len(steps)) * 100) if steps else 0
+    execution["current_step"] = step_index
+    execution["updated_at"] = now
+
+    # Add log entry
+    step_name = steps[step_index]["name"] if step_index < len(steps) else f"Step {step_index}"
+    log_message = f"{step_name}: {status}"
+    if error:
+        log_message += f" - {error}"
+
+    _execution_logs[execution_id].append({
+        "id": f"{execution_id}-log-{len(_execution_logs[execution_id])}",
+        "execution_id": execution_id,
+        "step_id": steps[step_index]["step_id"] if step_index < len(steps) else None,
+        "level": "error" if status == "failed" else "info",
+        "message": log_message,
+        "data": {"step_index": step_index, "output": output},
+        "timestamp": now,
+    })
+
+
+def complete_execution(
+    execution_id: str,
+    status: str = "completed",
+    result: dict | None = None,
+    error: str | None = None,
+) -> None:
+    """Mark execution as complete (success or failure).
+
+    Called by ARQ tasks when workflow finishes.
+    """
+    if execution_id not in _executions:
+        logger.warning(f"Execution {execution_id} not found for completion")
+        return
+
+    execution = _executions[execution_id]
+    now = datetime.utcnow().isoformat()
+
+    execution["status"] = status
+    execution["completed_at"] = now
+    execution["result"] = result
+    execution["error_message"] = error
+    execution["updated_at"] = now
+
+    if execution["started_at"]:
+        start = datetime.fromisoformat(execution["started_at"])
+        end = datetime.fromisoformat(now)
+        execution["duration_ms"] = int((end - start).total_seconds() * 1000)
+
+    if status == "completed":
+        execution["progress"] = 100
+
+    # Add final log
+    _execution_logs[execution_id].append({
+        "id": f"{execution_id}-log-{len(_execution_logs.get(execution_id, []))}",
+        "execution_id": execution_id,
+        "step_id": None,
+        "level": "error" if status == "failed" else "info",
+        "message": f"Execution {status}: {error or 'Success'}",
+        "data": {"result": result},
+        "timestamp": now,
+    })
+
+    logger.info(f"Execution {execution_id} completed with status {status}")
+
+
+async def simulate_execution_progress(execution_id: str) -> None:
+    """Simulate execution progress for real-time SSE updates.
+
+    This runs in the background to provide UI feedback while actual tasks run.
+    The ARQ tasks can optionally call update_execution_progress for more
+    accurate progress reporting.
+    """
+    import asyncio
+
+    execution = _executions.get(execution_id)
+    if not execution:
+        logger.warning(f"Cannot simulate progress: execution {execution_id} not found")
+        return
+
+    steps = _execution_steps.get(execution_id, [])
+    total_steps = len(steps)
+
+    if total_steps == 0:
+        logger.warning(f"Cannot simulate progress: no steps for execution {execution_id}")
+        return
+
+    logger.info(f"Starting execution progress simulation for {execution_id}")
+
+    try:
+        for step_index in range(total_steps):
+            # Check if execution was cancelled
+            current_execution = _executions.get(execution_id)
+            if not current_execution or current_execution.get("status") == "cancelled":
+                logger.info(f"Execution {execution_id} cancelled, stopping simulation")
+                return
+
+            # Mark step as running
+            update_execution_progress(execution_id, step_index, "running")
+
+            # Simulate step execution time (2-4 seconds per step)
+            await asyncio.sleep(2.0 + (step_index * 0.5))
+
+            # Mark step as completed
+            update_execution_progress(
+                execution_id,
+                step_index,
+                "completed",
+                output={"items_processed": 10 + step_index * 5}
+            )
+
+        # Mark execution as complete
+        complete_execution(
+            execution_id,
+            status="completed",
+            result={"total_items": sum(10 + i * 5 for i in range(total_steps))}
+        )
+        logger.info(f"Execution {execution_id} simulation completed successfully")
+
+    except Exception as e:
+        logger.error(f"Error in execution simulation for {execution_id}: {e}")
+        complete_execution(execution_id, status="failed", error=str(e))
+
+
+def start_execution_simulation(execution_id: str) -> None:
+    """Start background execution simulation.
+
+    This creates an asyncio task to simulate execution progress.
+    """
+    import asyncio
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Create task in the running loop
+            asyncio.create_task(simulate_execution_progress(execution_id))
+        else:
+            # Run in new event loop (shouldn't happen in FastAPI)
+            asyncio.run(simulate_execution_progress(execution_id))
+    except RuntimeError:
+        # No event loop, create one
+        asyncio.run(simulate_execution_progress(execution_id))
+
+
 async def _get_execution(
     execution_id: UUID,
     user: User,

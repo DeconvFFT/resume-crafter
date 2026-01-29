@@ -624,13 +624,24 @@ export default function WorkflowBuilderPage() {
           await activateCampaignMutation.mutateAsync(campaign.id);
         }
 
-        // Trigger job discovery cron job
+        // Trigger job discovery cron job - this now returns execution_id for real-time tracking
         const result = await triggerJobMutation.mutateAsync("job_discovery");
         toast.success("Workflow triggered! Job discovery started.");
 
-        // Note: In a full implementation, we'd get the execution ID from the trigger response
-        // and use it to track real-time progress via SSE
-        // setCurrentExecutionId(result.execution_id);
+        // Use the real execution ID for SSE tracking
+        if (result.execution_id) {
+          setCurrentExecutionId(result.execution_id);
+
+          // Update the execution state with real ID
+          setExecution((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  id: result.execution_id,
+                }
+              : null
+          );
+        }
       } else {
         // For new workflows, save first then run
         toast.info("Save the workflow first to run it");
@@ -638,64 +649,8 @@ export default function WorkflowBuilderPage() {
         return;
       }
 
-      // Simulate execution progress for UI feedback
-      // In production, this would be driven by SSE events from executionStream
-      let currentIndex = 0;
-      const interval = setInterval(() => {
-        if (currentIndex >= nodes.length) {
-          clearInterval(interval);
-          setExecution((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  status: "completed",
-                  completedAt: new Date(),
-                  progress: 100,
-                  duration: Date.now() - prev.startedAt.getTime(),
-                }
-              : null
-          );
-          setIsRunning(false);
-          return;
-        }
-
-        setExecution((prev) => {
-          if (!prev) return null;
-
-          const updatedNodes = prev.nodes.map((node, idx) => {
-            if (idx < currentIndex) {
-              return {
-                ...node,
-                status: "completed" as const,
-                startedAt: new Date(Date.now() - 2000),
-                completedAt: new Date(Date.now() - 1000),
-                duration: 1000,
-                output: { success: true },
-              };
-            }
-            if (idx === currentIndex) {
-              return {
-                ...node,
-                status: "running" as const,
-                startedAt: new Date(),
-              };
-            }
-            return node;
-          });
-
-          return {
-            ...prev,
-            nodes: updatedNodes,
-            currentNodeIndex: currentIndex,
-            progress: Math.round(((currentIndex + 1) / nodes.length) * 100),
-            duration: Date.now() - prev.startedAt.getTime(),
-          };
-        });
-
-        currentIndex++;
-      }, 1500);
-
-      return () => clearInterval(interval);
+      // Real-time progress is now driven by SSE events from executionStream
+      // The onStatusChange callback handles completion/failure states
     } catch (error) {
       console.error("Failed to run workflow:", error);
       toast.error("Failed to start workflow");

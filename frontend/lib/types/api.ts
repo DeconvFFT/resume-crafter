@@ -866,6 +866,11 @@ export interface CronJobListResponse {
   items: CronJobResponse[];
 }
 
+export interface CronJobTriggerResponse {
+  job: CronJobResponse;
+  execution_id: string;
+}
+
 export interface CronJobSchedule {
   job_discovery_interval_hours: number;
   job_analysis_interval_hours: number;

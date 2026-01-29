@@ -1084,8 +1084,10 @@ from src.models.schemas.execution import (
     CronJobResponse,
     CronJobSchedule,
     CronJobStatus as SchemaCronJobStatus,
+    CronJobTriggerResponse,
     CronJobType as SchemaCronJobType,
 )
+from src.api.routes.execution import create_execution, start_execution_simulation
 
 
 @router.get("/cron/jobs", response_model=CronJobListResponse, tags=["Cron Jobs"])
@@ -1222,12 +1224,15 @@ async def resume_cron_job(
     )
 
 
-@router.post("/cron/jobs/{job_type}/trigger", response_model=CronJobResponse, tags=["Cron Jobs"])
+@router.post("/cron/jobs/{job_type}/trigger", response_model=CronJobTriggerResponse, tags=["Cron Jobs"])
 async def trigger_cron_job(
     job_type: SchemaCronJobType,
     current_user: CurrentUser,
-) -> CronJobResponse:
-    """Manually trigger immediate execution of a cron job."""
+) -> CronJobTriggerResponse:
+    """Manually trigger immediate execution of a cron job.
+
+    Returns both the job status and an execution_id for real-time tracking.
+    """
     scheduler = get_scheduler()
 
     try:
@@ -1238,9 +1243,20 @@ async def trigger_cron_job(
             detail=str(e),
         )
 
+    # Create an execution record for real-time tracking
+    execution = create_execution(
+        user_id=str(current_user.id),
+        workflow_type=job_type.value,
+        workflow_name=job_type.value.replace("_", " ").title(),
+    )
+
+    # Start background simulation for real-time UI updates
+    start_execution_simulation(execution["id"])
+
     job_dict = job_state.to_dict()
-    logger.info(f"User {current_user.id} manually triggered cron job {job_type.value}")
-    return CronJobResponse(
+    logger.info(f"User {current_user.id} manually triggered cron job {job_type.value}, execution_id={execution['id']}")
+
+    job_response = CronJobResponse(
         job_type=SchemaCronJobType(job_dict["job_type"]),
         status=SchemaCronJobStatus(job_dict["status"]),
         interval_seconds=job_dict["interval_seconds"],
@@ -1251,6 +1267,11 @@ async def trigger_cron_job(
         run_count=job_dict["run_count"],
         error_count=job_state.error_count,
         config=job_dict["config"],
+    )
+
+    return CronJobTriggerResponse(
+        job=job_response,
+        execution_id=execution["id"],
     )
 
 

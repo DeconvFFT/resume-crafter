@@ -54,6 +54,7 @@ import type {
   CronJobConfig,
   CronJobResponse,
   CronJobListResponse,
+  CronJobTriggerResponse,
   CronJobSchedule,
 } from "@/lib/types/api";
 
@@ -820,12 +821,12 @@ export const api = {
         return handleResponse<CronJobResponse>(response);
       },
 
-      trigger: async (token: string, jobType: string): Promise<CronJobResponse> => {
+      trigger: async (token: string, jobType: string): Promise<CronJobTriggerResponse> => {
         const response = await fetch(`${API_BASE_URL}/api/automation/cron/jobs/${jobType}/trigger`, {
           method: "POST",
           headers: getAuthHeaders(token),
         });
-        return handleResponse<CronJobResponse>(response);
+        return handleResponse<CronJobTriggerResponse>(response);
       },
 
       updateConfig: async (token: string, jobType: string, config: CronJobConfig): Promise<CronJobResponse> => {
