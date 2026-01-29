@@ -79,6 +79,25 @@ class Settings(BaseSettings):
     # CORS - set to "*" to allow all origins in development
     cors_origins_str: str = "*"
 
+    # LinkedIn Scraper Configuration
+    # Get li_at cookie from: Browser DevTools > Application > Cookies > linkedin.com
+    linkedin_session_cookie: str | None = None
+
+    # SMTP Email Configuration (for outreach)
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from_name: str = "Resume Crafter"
+
+    # Scheduling Configuration
+    scheduling_provider: str = "calcom"
+    scheduling_link: str | None = None
+
+    # Automation Rate Limits
+    max_applications_per_day: int = 35
+    min_application_delay_seconds: int = 300  # 5 minutes
+
     @property
     def cors_origins(self) -> list[str]:
         """Parse CORS origins - use '*' for all origins in development."""

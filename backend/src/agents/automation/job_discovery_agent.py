@@ -15,9 +15,22 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from src.config import get_settings
 from src.models.database import JobSource, DiscoveredJob, SearchCampaign
+from src.integrations.linkedin_scraper import (
+    LinkedInScraper,
+    LinkedInSearchConfig,
+    LinkedInJobResult,
+    ExperienceLevel,
+    DatePosted,
+    RemoteOption,
+    AuthenticationError,
+    RateLimitExceeded,
+    ScrapingError,
+)
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 class JobSearchQuery(BaseModel):
@@ -179,46 +192,213 @@ class JobDiscoveryAgent:
         query: JobSearchQuery,
         max_results: int,
     ) -> list[DiscoveredJobData]:
-        """Execute search on a source (mock implementation).
+        """Execute search on a source using real integrations.
 
-        In Phase 6, this will be replaced with real scraping integrations.
+        Args:
+            query: Search query configuration.
+            max_results: Maximum jobs to fetch.
+
+        Returns:
+            List of discovered jobs.
         """
-        # Mock implementation - returns sample jobs
         logger.info(f"Executing search on {query.source}: {query.query[:50]}...")
 
-        # Generate mock jobs for testing
-        mock_jobs = self._generate_mock_jobs(query, min(max_results, 5))
-        return mock_jobs
+        if query.source == JobSource.LINKEDIN:
+            return await self._search_linkedin(query, max_results)
+        elif query.source == JobSource.INDEED:
+            # Indeed scraping not yet implemented
+            logger.warning("Indeed scraping not yet implemented, skipping")
+            return []
+        elif query.source == JobSource.GREENHOUSE:
+            # Greenhouse API not yet implemented
+            logger.warning("Greenhouse API not yet implemented, skipping")
+            return []
+        else:
+            logger.warning(f"Unknown job source: {query.source}")
+            return []
 
-    def _generate_mock_jobs(
+    async def _search_linkedin(
         self,
         query: JobSearchQuery,
-        count: int,
+        max_results: int,
     ) -> list[DiscoveredJobData]:
-        """Generate mock job data for testing."""
-        mock_companies = ["TechCorp", "AI Labs", "DataFlow", "CloudScale", "InnovateTech"]
-        mock_titles = ["Software Engineer", "ML Engineer", "Data Scientist", "Backend Developer", "Full Stack Engineer"]
+        """Search for jobs on LinkedIn using the real scraper.
 
-        jobs = []
-        for i in range(count):
-            job = DiscoveredJobData(
-                external_id=f"{query.source.value}_{uuid4().hex[:8]}",
-                source=query.source,
-                title=mock_titles[i % len(mock_titles)],
-                company=mock_companies[i % len(mock_companies)],
-                location=query.location_filter.split(" OR ")[0] if query.location_filter else "Remote",
-                description=f"We are looking for a talented {mock_titles[i % len(mock_titles)]} to join our team...",
-                requirements="5+ years experience, Python, Machine Learning, Cloud platforms",
-                salary_min=120000 + (i * 10000),
-                salary_max=180000 + (i * 10000),
-                salary_currency="USD",
-                url=f"https://{query.source.value}.com/jobs/{uuid4().hex[:8]}",
-                posted_at=datetime.utcnow(),
-                raw_data={"query": query.query, "source": query.source.value},
+        Args:
+            query: Search query configuration.
+            max_results: Maximum jobs to fetch.
+
+        Returns:
+            List of discovered jobs from LinkedIn.
+        """
+        # Check if LinkedIn session cookie is configured
+        if not settings.linkedin_session_cookie:
+            logger.error(
+                "LinkedIn session cookie not configured. "
+                "Set LINKEDIN_SESSION_COOKIE in environment variables."
             )
-            jobs.append(job)
+            raise ScrapingError(
+                "LinkedIn session cookie not configured. "
+                "Please set LINKEDIN_SESSION_COOKIE environment variable."
+            )
 
-        return jobs
+        # Build LinkedIn search config from query
+        config = self._build_linkedin_config(query, max_results)
+
+        # Execute search using LinkedIn scraper
+        try:
+            async with LinkedInScraper(
+                session_cookie=settings.linkedin_session_cookie
+            ) as scraper:
+                linkedin_jobs = await scraper.search_jobs(config)
+
+                # Convert to DiscoveredJobData format
+                jobs = []
+                for lj in linkedin_jobs:
+                    job = self._convert_linkedin_job(lj, query)
+                    jobs.append(job)
+
+                logger.info(f"LinkedIn search found {len(jobs)} jobs")
+                return jobs
+
+        except AuthenticationError as e:
+            logger.error(f"LinkedIn authentication failed: {e}")
+            raise ScrapingError(f"LinkedIn authentication failed: {e}")
+        except RateLimitExceeded as e:
+            logger.warning(f"LinkedIn rate limit exceeded: {e}")
+            raise ScrapingError(f"LinkedIn rate limit exceeded: {e}")
+        except Exception as e:
+            logger.error(f"LinkedIn search failed: {e}")
+            raise ScrapingError(f"LinkedIn search failed: {e}")
+
+    def _build_linkedin_config(
+        self,
+        query: JobSearchQuery,
+        max_results: int,
+    ) -> LinkedInSearchConfig:
+        """Build LinkedInSearchConfig from JobSearchQuery.
+
+        Args:
+            query: Our internal query format.
+            max_results: Maximum jobs to fetch.
+
+        Returns:
+            LinkedIn-specific search configuration.
+        """
+        # Extract keywords from boolean query
+        # The query is in format: ("role1" OR "role2") AND (keyword1 OR keyword2) NOT (excluded)
+        # We'll simplify by using the first role term as keywords
+        keywords = query.query
+        # Try to extract quoted terms
+        import re
+        quoted_terms = re.findall(r'"([^"]+)"', query.query)
+        if quoted_terms:
+            keywords = " ".join(quoted_terms[:3])  # Use up to 3 terms
+
+        # Map experience level filter
+        experience_levels = []
+        if query.experience_filter:
+            exp_map = {
+                "entry": [ExperienceLevel.ENTRY_LEVEL, ExperienceLevel.ASSOCIATE],
+                "mid": [ExperienceLevel.MID_SENIOR],
+                "senior": [ExperienceLevel.MID_SENIOR, ExperienceLevel.DIRECTOR],
+                "executive": [ExperienceLevel.DIRECTOR, ExperienceLevel.EXECUTIVE],
+            }
+            experience_levels = exp_map.get(query.experience_filter.lower(), [])
+
+        # Extract first location if multiple
+        location = None
+        if query.location_filter:
+            locations = query.location_filter.split(" OR ")
+            location = locations[0].strip() if locations else None
+
+        return LinkedInSearchConfig(
+            keywords=keywords,
+            location=location,
+            experience_levels=experience_levels,
+            date_posted=DatePosted.PAST_WEEK,  # Focus on recent jobs
+            remote_options=[],  # Include all remote options
+            max_results=min(max_results, 50),  # LinkedIn max per search
+        )
+
+    def _convert_linkedin_job(
+        self,
+        linkedin_job: LinkedInJobResult,
+        query: JobSearchQuery,
+    ) -> DiscoveredJobData:
+        """Convert LinkedIn job result to our internal format.
+
+        Args:
+            linkedin_job: Job from LinkedIn scraper.
+            query: Original search query for metadata.
+
+        Returns:
+            Normalized DiscoveredJobData.
+        """
+        # Parse salary range if available
+        salary_min = None
+        salary_max = None
+        if linkedin_job.salary_range:
+            # Try to parse salary like "$120K - $180K" or "$120,000 - $180,000"
+            import re
+            salary_matches = re.findall(r'\$?([\d,]+)K?', linkedin_job.salary_range)
+            if len(salary_matches) >= 1:
+                salary_str = salary_matches[0].replace(',', '')
+                salary_min = int(salary_str)
+                if salary_min < 1000:  # Likely in thousands (e.g., 120K)
+                    salary_min *= 1000
+            if len(salary_matches) >= 2:
+                salary_str = salary_matches[1].replace(',', '')
+                salary_max = int(salary_str)
+                if salary_max < 1000:
+                    salary_max *= 1000
+
+        # Parse posted date if available
+        posted_at = None
+        if linkedin_job.posted_date:
+            # LinkedIn uses relative dates like "2 days ago", "1 week ago"
+            from datetime import timedelta
+            now = datetime.utcnow()
+            posted_str = linkedin_job.posted_date.lower()
+            if "hour" in posted_str:
+                hours = int(re.search(r'(\d+)', posted_str).group(1)) if re.search(r'(\d+)', posted_str) else 1
+                posted_at = now - timedelta(hours=hours)
+            elif "day" in posted_str:
+                days = int(re.search(r'(\d+)', posted_str).group(1)) if re.search(r'(\d+)', posted_str) else 1
+                posted_at = now - timedelta(days=days)
+            elif "week" in posted_str:
+                weeks = int(re.search(r'(\d+)', posted_str).group(1)) if re.search(r'(\d+)', posted_str) else 1
+                posted_at = now - timedelta(weeks=weeks)
+            elif "month" in posted_str:
+                months = int(re.search(r'(\d+)', posted_str).group(1)) if re.search(r'(\d+)', posted_str) else 1
+                posted_at = now - timedelta(days=months * 30)
+            else:
+                posted_at = now  # Default to now if can't parse
+
+        return DiscoveredJobData(
+            external_id=linkedin_job.job_id,
+            source=JobSource.LINKEDIN,
+            title=linkedin_job.title,
+            company=linkedin_job.company,
+            location=linkedin_job.location or ("Remote" if linkedin_job.is_remote else "Unknown"),
+            description=linkedin_job.description_snippet,
+            requirements=None,  # Would need to fetch full job details
+            salary_min=salary_min,
+            salary_max=salary_max,
+            salary_currency="USD" if (salary_min or salary_max) else None,
+            url=linkedin_job.job_url,
+            posted_at=posted_at,
+            raw_data={
+                "company_id": linkedin_job.company_id,
+                "company_logo_url": linkedin_job.company_logo_url,
+                "applicant_count": linkedin_job.applicant_count,
+                "is_easy_apply": linkedin_job.is_easy_apply,
+                "is_remote": linkedin_job.is_remote,
+                "employment_type": linkedin_job.employment_type,
+                "seniority_level": linkedin_job.seniority_level,
+                "query": query.query,
+            },
+        )
 
     def _deduplicate_jobs(
         self,
