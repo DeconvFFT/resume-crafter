@@ -26,9 +26,9 @@ const edgeColors: Record<string, { start: string; end: string; glow: string }> =
     glow: "rgba(245, 158, 11, 0.4)",
   },
   action: {
-    start: "#8B5CF6",
-    end: "#A855F7",
-    glow: "rgba(139, 92, 246, 0.4)",
+    start: "#14B8A6",
+    end: "#06B6D4",
+    glow: "rgba(20, 184, 166, 0.4)",
   },
   condition: {
     start: "#14B8A6",
@@ -41,9 +41,9 @@ const edgeColors: Record<string, { start: string; end: string; glow: string }> =
     glow: "rgba(34, 197, 94, 0.4)",
   },
   default: {
-    start: "#6366F1",
-    end: "#8B5CF6",
-    glow: "rgba(99, 102, 241, 0.4)",
+    start: "#14B8A6",
+    end: "#06B6D4",
+    glow: "rgba(20, 184, 166, 0.4)",
   },
 };
 

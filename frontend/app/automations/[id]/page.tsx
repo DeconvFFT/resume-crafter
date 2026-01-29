@@ -757,8 +757,8 @@ export default function WorkflowBuilderPage() {
             <div
               className="flex items-center justify-center w-8 h-8 rounded-lg"
               style={{
-                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)",
-                boxShadow: "0 0 20px rgba(99, 102, 241, 0.2)",
+                background: "linear-gradient(135deg, rgba(20, 184, 166, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%)",
+                boxShadow: "0 0 20px rgba(20, 184, 166, 0.2)",
               }}
             >
               <Zap className="h-4 w-4 text-primary" />
@@ -838,7 +838,7 @@ export default function WorkflowBuilderPage() {
                 align="end"
                 className="w-80 bg-[#14141f]/95 backdrop-blur-xl border-white/10"
                 style={{
-                  boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99, 102, 241, 0.1)",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(20, 184, 166, 0.1)",
                 }}
               >
                 <DropdownMenuLabel className="text-white/70 text-xs uppercase tracking-wider">
@@ -878,9 +878,9 @@ export default function WorkflowBuilderPage() {
             size="sm"
             onClick={handleRun}
             disabled={isRunning || nodes.length === 0}
-            className="gap-1.5 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white border-0 shadow-lg"
+            className="gap-1.5 bg-gradient-to-r from-primary to-cyan-600 hover:from-primary/90 hover:to-cyan-600/90 text-white border-0 shadow-lg"
             style={{
-              boxShadow: "0 0 20px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(0,0,0,0.3)",
+              boxShadow: "0 0 20px rgba(20, 184, 166, 0.3), 0 4px 12px rgba(0,0,0,0.3)",
             }}
           >
             {isRunning ? (

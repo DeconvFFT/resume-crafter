@@ -100,7 +100,7 @@ function NavItem({ href, label, icon: Icon, isActive, onClick }: NavItemProps) {
             animate={{ opacity: 1, scaleY: 1 }}
             exit={{ opacity: 0, scaleY: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-gradient-to-b from-violet-500 via-purple-500 to-fuchsia-500"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-gradient-to-b from-teal-500 via-cyan-500 to-teal-400"
           />
         )}
       </AnimatePresence>
@@ -109,7 +109,7 @@ function NavItem({ href, label, icon: Icon, isActive, onClick }: NavItemProps) {
       <motion.span
         className={cn(
           "absolute inset-0 rounded-lg -z-10",
-          isActive && "bg-gradient-to-r from-violet-500/15 via-purple-500/10 to-transparent"
+          isActive && "bg-gradient-to-r from-teal-500/15 via-cyan-500/10 to-transparent"
         )}
         initial={false}
         animate={{
@@ -126,7 +126,7 @@ function NavItem({ href, label, icon: Icon, isActive, onClick }: NavItemProps) {
         <Icon
           className={cn(
             "h-4 w-4 flex-shrink-0 transition-colors duration-300",
-            isActive ? "text-violet-400" : "text-slate-500 group-hover:text-violet-400"
+            isActive ? "text-teal-400" : "text-slate-500 group-hover:text-teal-400"
           )}
         />
       </motion.span>
@@ -265,7 +265,7 @@ export function DashboardLayout({
                 <SheetHeader className="p-4 border-b border-slate-800/50">
                   <SheetTitle className="text-left">
                     <span className="flex items-center gap-2">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/25">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 shadow-lg shadow-teal-500/25">
                         <Sparkles className="h-4 w-4 text-white" />
                       </span>
                       <span className="font-bold text-lg bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
@@ -288,10 +288,10 @@ export function DashboardLayout({
               href="/dashboard"
               className="flex items-center gap-2 group"
             >
-              <span className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/25 group-hover:shadow-violet-500/40 transition-shadow duration-300">
+              <span className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 shadow-lg shadow-teal-500/25 group-hover:shadow-teal-500/40 transition-shadow duration-300">
                 <Sparkles className="h-4 w-4 text-white" />
               </span>
-              <span className="font-bold text-lg bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent group-hover:from-violet-400 group-hover:to-fuchsia-400 transition-all duration-300">
+              <span className="font-bold text-lg bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent group-hover:from-teal-400 group-hover:to-cyan-400 transition-all duration-300">
                 Resume Crafter
               </span>
             </Link>
@@ -320,7 +320,7 @@ export function DashboardLayout({
         {/* Sidebar - Executive Noir Design */}
         <aside className="hidden md:flex flex-col fixed top-14 left-0 bottom-0 w-60 bg-slate-900/80 backdrop-blur-xl border-r border-slate-800/50 overflow-hidden transition-all duration-300 ease-out">
           {/* Gradient border effect on right edge */}
-          <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-violet-500/20 via-purple-500/10 to-transparent" />
+          <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-teal-500/20 via-cyan-500/10 to-transparent" />
 
           {/* Navigation area with scroll */}
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50 hover:scrollbar-thumb-slate-600/50">
@@ -345,16 +345,16 @@ export function DashboardLayout({
               }}
             >
               {/* Subtle gradient overlay on hover */}
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-500/5 via-purple-500/5 to-fuchsia-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-teal-500/5 via-cyan-500/5 to-teal-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
               <div className="relative flex items-center gap-3">
                 {/* Avatar with gradient ring */}
                 <div className="relative">
-                  <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 opacity-50 group-hover:opacity-75 blur-sm transition-opacity duration-300" />
+                  <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-400 opacity-50 group-hover:opacity-75 blur-sm transition-opacity duration-300" />
                   <Avatar size="sm" className="relative border-2 border-slate-900">
                     <AvatarFallback
                       size="sm"
-                      className="bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white font-semibold"
+                      className="bg-gradient-to-br from-teal-600 to-cyan-600 text-white font-semibold"
                     >
                       {userInitials}
                     </AvatarFallback>

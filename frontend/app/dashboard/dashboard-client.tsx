@@ -121,8 +121,8 @@ function StatCard({
   suffix,
   loading,
   index = 0,
-  gradient = "from-violet-500/20 to-purple-500/20",
-  iconGradient = "from-violet-500 to-purple-500",
+  gradient = "from-teal-500/20 to-cyan-500/20",
+  iconGradient = "from-teal-500 to-cyan-500",
 }: {
   label: string;
   value: number | string;
@@ -163,7 +163,7 @@ function StatCard({
           "relative overflow-hidden rounded-xl",
           "border border-white/10 bg-white/5 backdrop-blur-xl",
           "p-6 transition-all duration-500",
-          "hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10"
+          "hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/10"
         )}
       >
         {/* Gradient background on hover */}
@@ -192,7 +192,7 @@ function StatCard({
                   "border border-white/10 group-hover:border-white/20 transition-colors"
                 )}
               >
-                <Icon className={cn("h-5 w-5 bg-gradient-to-r bg-clip-text", iconGradient)} style={{ color: 'rgb(139, 92, 246)' }} />
+                <Icon className={cn("h-5 w-5 bg-gradient-to-r bg-clip-text", iconGradient)} style={{ color: 'rgb(20, 184, 166)' }} />
               </div>
             </div>
 
@@ -202,7 +202,7 @@ function StatCard({
                 {typeof value === "number" ? animatedValue : value}
               </span>
               {suffix && (
-                <span className="text-lg text-violet-300/80 font-medium">
+                <span className="text-lg text-teal-300/80 font-medium">
                   {suffix}
                 </span>
               )}
@@ -213,7 +213,7 @@ function StatCard({
             <span className="text-sm text-white/60 font-medium tracking-wide">
               {label}
             </span>
-            <TrendingUp className="h-4 w-4 text-violet-400/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <TrendingUp className="h-4 w-4 text-teal-400/50 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </motion.div>
@@ -244,12 +244,12 @@ function CampaignCard({ campaign, index }: { campaign: Campaign; index: number }
           "group relative flex items-center gap-4 p-4 rounded-xl overflow-hidden",
           "border border-white/10 bg-white/5 backdrop-blur-sm",
           "transition-all duration-300",
-          "hover:border-violet-500/30 hover:bg-white/[0.07]"
+          "hover:border-teal-500/30 hover:bg-white/[0.07]"
         )}
       >
         {/* Gradient border effect on hover */}
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-r from-violet-500/20 via-purple-500/20 to-violet-500/20" />
+          <div className="absolute inset-[-1px] rounded-xl bg-gradient-to-r from-teal-500/20 via-cyan-500/20 to-teal-500/20" />
           <div className="absolute inset-[1px] rounded-[10px] bg-card" />
         </div>
 
@@ -313,7 +313,7 @@ function CampaignCard({ campaign, index }: { campaign: Campaign; index: number }
           </div>
         </div>
 
-        <ChevronRight className="relative h-4 w-4 text-white/20 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
+        <ChevronRight className="relative h-4 w-4 text-white/20 group-hover:text-teal-400 group-hover:translate-x-1 transition-all" />
       </Link>
     </motion.div>
   );
@@ -396,7 +396,7 @@ function QuickActionCard({
   description,
   icon: Icon,
   href,
-  gradient = "from-violet-500 to-purple-500",
+  gradient = "from-teal-500 to-cyan-500",
   index = 0,
 }: {
   title: string;
@@ -420,11 +420,11 @@ function QuickActionCard({
           "group relative flex flex-col p-6 rounded-xl overflow-hidden",
           "border border-white/10 bg-white/5 backdrop-blur-sm",
           "transition-all duration-300",
-          "hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10"
+          "hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/10"
         )}
       >
         {/* Gradient background on hover */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-violet-500/10 to-purple-500/10" />
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-teal-500/10 to-cyan-500/10" />
 
         {/* Icon with animation */}
         <div className="relative mb-4">
@@ -438,7 +438,7 @@ function QuickActionCard({
             "border border-white/10 group-hover:border-white/20",
             "transition-all duration-300 group-hover:scale-110"
           )}>
-            <Icon className="h-5 w-5 text-violet-400 group-hover:text-violet-300 transition-colors" />
+            <Icon className="h-5 w-5 text-teal-400 group-hover:text-teal-300 transition-colors" />
           </div>
         </div>
 
@@ -471,18 +471,18 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-violet-500/20">
-          <Icon className="h-4 w-4 text-violet-400" />
+        <div className="p-2 rounded-lg bg-teal-500/20">
+          <Icon className="h-4 w-4 text-teal-400" />
         </div>
         <div>
           <h2 className="font-semibold text-white/90">{title}</h2>
-          <div className="h-0.5 w-8 mt-1.5 bg-gradient-to-r from-violet-500 to-transparent rounded-full" />
+          <div className="h-0.5 w-8 mt-1.5 bg-gradient-to-r from-teal-500 to-transparent rounded-full" />
         </div>
       </div>
       {action && actionHref && (
         <Link
           href={actionHref}
-          className="group flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+          className="group flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
         >
           {action}
           <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
@@ -579,8 +579,8 @@ export default function DashboardClient() {
     <div className="relative min-h-screen">
       {/* Background gradient mesh */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-violet-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-purple-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-teal-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-cyan-500/10 rounded-full blur-[120px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 h-1/3 bg-indigo-500/5 rounded-full blur-[100px]" />
         {/* Subtle grid pattern */}
         <div
@@ -608,7 +608,7 @@ export default function DashboardClient() {
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               >
-                <Sparkles className="h-6 w-6 text-violet-400" />
+                <Sparkles className="h-6 w-6 text-teal-400" />
               </motion.div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
                 Welcome back, {userName}
@@ -627,7 +627,7 @@ export default function DashboardClient() {
           >
             <Button
               asChild
-              className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 border-0 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300"
+              className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 border-0 shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300"
             >
               <Link href="/resume" className="gap-2">
                 <FileOutput className="h-4 w-4" />
@@ -651,8 +651,8 @@ export default function DashboardClient() {
             icon={BarChart3}
             loading={isLoading}
             index={0}
-            gradient="from-violet-500/20 to-purple-500/20"
-            iconGradient="from-violet-500 to-purple-500"
+            gradient="from-teal-500/20 to-cyan-500/20"
+            iconGradient="from-teal-500 to-cyan-500"
           />
           <StatCard
             label="Documents"
@@ -720,8 +720,8 @@ export default function DashboardClient() {
                   className="text-center py-10 border border-dashed border-white/10 rounded-xl bg-white/[0.02]"
                 >
                   <div className="relative inline-block mb-4">
-                    <div className="absolute inset-0 blur-xl bg-violet-500/30" />
-                    <Zap className="relative h-12 w-12 text-violet-400" />
+                    <div className="absolute inset-0 blur-xl bg-teal-500/30" />
+                    <Zap className="relative h-12 w-12 text-teal-400" />
                   </div>
                   <h3 className="font-semibold text-white/90">No campaigns yet</h3>
                   <p className="text-sm text-white/50 mt-2 mb-5">
@@ -731,7 +731,7 @@ export default function DashboardClient() {
                     asChild
                     variant="outline"
                     size="sm"
-                    className="border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 hover:text-violet-200"
+                    className="border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 hover:text-teal-200"
                   >
                     <Link href="/automations">
                       <Plus className="h-4 w-4 mr-1.5" />
@@ -745,12 +745,12 @@ export default function DashboardClient() {
             {/* Quick Actions Grid */}
             <div>
               <div className="flex items-center gap-3 mb-5">
-                <div className="p-2 rounded-lg bg-violet-500/20">
-                  <Sparkles className="h-4 w-4 text-violet-400" />
+                <div className="p-2 rounded-lg bg-teal-500/20">
+                  <Sparkles className="h-4 w-4 text-teal-400" />
                 </div>
                 <div>
                   <h2 className="font-semibold text-white/90">Quick Actions</h2>
-                  <div className="h-0.5 w-8 mt-1.5 bg-gradient-to-r from-violet-500 to-transparent rounded-full" />
+                  <div className="h-0.5 w-8 mt-1.5 bg-gradient-to-r from-teal-500 to-transparent rounded-full" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -759,7 +759,7 @@ export default function DashboardClient() {
                   description="Create a tailored resume for a job"
                   icon={FileOutput}
                   href="/resume"
-                  gradient="from-violet-500 to-purple-500"
+                  gradient="from-teal-500 to-cyan-500"
                   index={0}
                 />
                 <QuickActionCard
@@ -812,7 +812,7 @@ export default function DashboardClient() {
               ) : executionsList.length > 0 ? (
                 <div className="relative">
                   {/* Timeline line */}
-                  <div className="absolute left-5 top-6 bottom-6 w-0.5 bg-gradient-to-b from-violet-500/30 via-white/10 to-transparent" />
+                  <div className="absolute left-5 top-6 bottom-6 w-0.5 bg-gradient-to-b from-teal-500/30 via-white/10 to-transparent" />
 
                   <div className="space-y-1">
                     {executionsList.map((execution: Execution, index: number) => (

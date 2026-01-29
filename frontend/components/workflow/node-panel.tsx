@@ -56,10 +56,10 @@ const categoryColors: Record<NodeCategory, {
     border: "rgba(245, 158, 11, 0.3)",
   },
   action: {
-    bg: "rgba(139, 92, 246, 0.12)",
-    text: "#8B5CF6",
-    glow: "rgba(139, 92, 246, 0.3)",
-    border: "rgba(139, 92, 246, 0.3)",
+    bg: "rgba(20, 184, 166, 0.12)",
+    text: "#14B8A6",
+    glow: "rgba(20, 184, 166, 0.3)",
+    border: "rgba(20, 184, 166, 0.3)",
   },
   logic: {
     bg: "rgba(20, 184, 166, 0.12)",

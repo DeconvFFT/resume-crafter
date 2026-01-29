@@ -57,12 +57,12 @@ const nodeTypeConfig: Record<
     hasOutputHandle: true,
   },
   action: {
-    glowColor: "rgba(139, 92, 246, 0.4)",   // Purple glow
-    borderColor: "rgba(139, 92, 246, 0.5)",
-    iconBgColor: "rgba(139, 92, 246, 0.15)",
-    iconColor: "#8B5CF6",
-    handleColor: "#8B5CF6",
-    shadowColor: "0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(139, 92, 246, 0.1)",
+    glowColor: "rgba(20, 184, 166, 0.4)",   // Teal glow
+    borderColor: "rgba(20, 184, 166, 0.5)",
+    iconBgColor: "rgba(20, 184, 166, 0.15)",
+    iconColor: "#14B8A6",
+    handleColor: "#14B8A6",
+    shadowColor: "0 0 20px rgba(20, 184, 166, 0.3), 0 0 40px rgba(20, 184, 166, 0.1)",
     hasInputHandle: true,
     hasOutputHandle: true,
   },

@@ -82,10 +82,10 @@ interface SkeletonNodeProps {
 
 function SkeletonNode({ variant }: SkeletonNodeProps) {
   const variantColors: Record<string, string> = {
-    trigger: "border-l-blue-500",
-    action: "border-l-green-500",
-    condition: "border-l-yellow-500",
-    output: "border-l-purple-500",
+    trigger: "border-l-amber-500",
+    action: "border-l-teal-500",
+    condition: "border-l-cyan-500",
+    output: "border-l-emerald-500",
   };
 
   return (

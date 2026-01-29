@@ -39,10 +39,10 @@ const categoryColors: Record<NodeCategory, {
     border: "rgba(245, 158, 11, 0.3)",
   },
   action: {
-    bg: "rgba(139, 92, 246, 0.12)",
-    text: "#8B5CF6",
-    glow: "rgba(139, 92, 246, 0.3)",
-    border: "rgba(139, 92, 246, 0.3)",
+    bg: "rgba(20, 184, 166, 0.12)",
+    text: "#14B8A6",
+    glow: "rgba(20, 184, 166, 0.3)",
+    border: "rgba(20, 184, 166, 0.3)",
   },
   logic: {
     bg: "rgba(20, 184, 166, 0.12)",
@@ -877,9 +877,9 @@ export function NodeConfigPanel({
             size="sm"
             onClick={handleSave}
             disabled={!isDirty}
-            className="flex-1 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white border-0"
+            className="flex-1 bg-gradient-to-r from-primary to-cyan-600 hover:from-primary/90 hover:to-cyan-600/90 text-white border-0"
             style={{
-              boxShadow: isDirty ? "0 0 20px rgba(139, 92, 246, 0.3)" : "none",
+              boxShadow: isDirty ? "0 0 20px rgba(20, 184, 166, 0.3)" : "none",
             }}
           >
             Save Changes
