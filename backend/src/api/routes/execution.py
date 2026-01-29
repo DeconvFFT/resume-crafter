@@ -125,8 +125,8 @@ async def list_executions(
     """List executions with filters."""
     user_id = str(current_user.id)
 
-    # Ensure sample executions exist for development/demo (creates if none exist)
-    ensure_sample_executions_for_user(user_id)
+    # Sample executions disabled - only show real executions
+    # ensure_sample_executions_for_user(user_id)
 
     # Filter executions
     filtered = [

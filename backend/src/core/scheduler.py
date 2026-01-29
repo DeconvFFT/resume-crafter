@@ -27,8 +27,15 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Coroutine
+from urllib.parse import urlparse
+
+from arq import create_pool
+from arq.connections import RedisSettings
+
+from src.config import get_settings
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 class CronJobStatus(str, Enum):
@@ -88,6 +95,20 @@ class CronJobState:
         }
 
 
+def _get_redis_settings() -> RedisSettings:
+    """Get Redis settings for ARQ from config."""
+    url = str(settings.redis_url)
+    parsed = urlparse(url)
+
+    return RedisSettings(
+        host=parsed.hostname or "localhost",
+        port=parsed.port or 6379,
+        database=int(parsed.path.lstrip("/") or 0) if parsed.path else 0,
+        password=parsed.password,
+        username=parsed.username,
+    )
+
+
 class CronScheduler:
     """Scheduler for recurring automation jobs.
 
@@ -118,6 +139,7 @@ class CronScheduler:
         self._jobs: dict[CronJobType, CronJobState] = {}
         self._running = False
         self._lock = asyncio.Lock()
+        self._arq_pool = None
 
         # Initialize job states with default configurations
         self._jobs[CronJobType.JOB_DISCOVERY] = CronJobState(
@@ -177,6 +199,12 @@ class CronScheduler:
                     except asyncio.CancelledError:
                         pass
                     job_state._task = None
+
+            # Close ARQ pool
+            if self._arq_pool:
+                await self._arq_pool.close()
+                self._arq_pool = None
+                logger.info("Closed ARQ connection pool")
 
             logger.info("Cron scheduler stopped")
 
@@ -277,23 +305,39 @@ class CronScheduler:
             # Wait for next interval
             await asyncio.sleep(job_state.interval_seconds)
 
-    async def _execute_job(self, job_type: CronJobType) -> None:
-        """Execute the actual job logic.
+    async def _get_arq_pool(self):
+        """Get or create ARQ Redis connection pool."""
+        if self._arq_pool is None:
+            try:
+                self._arq_pool = await create_pool(_get_redis_settings())
+                logger.info("Created ARQ connection pool")
+            except Exception as e:
+                logger.error(f"Failed to create ARQ pool: {e}")
+                raise
+        return self._arq_pool
 
-        This method dispatches to the appropriate job handler.
-        In production, these would typically enqueue tasks to ARQ workers.
+    async def _execute_job(self, job_type: CronJobType) -> None:
+        """Execute the actual job logic by enqueuing ARQ tasks.
+
+        This method dispatches to ARQ background workers for real execution.
         """
+        try:
+            pool = await self._get_arq_pool()
+        except Exception as e:
+            logger.error(f"Cannot execute job {job_type.value}: ARQ pool unavailable - {e}")
+            raise
+
         if job_type == CronJobType.JOB_DISCOVERY:
-            await self._run_job_discovery()
+            await self._run_job_discovery(pool)
         elif job_type == CronJobType.JOB_ANALYSIS:
-            await self._run_job_analysis()
+            await self._run_job_analysis(pool)
         elif job_type == CronJobType.APPLICATION_QUEUE:
-            await self._run_application_queue()
+            await self._run_application_queue(pool)
         else:
             raise ValueError(f"Unknown job type: {job_type}")
 
-    async def _run_job_discovery(self) -> None:
-        """Run job discovery for all active campaigns.
+    async def _run_job_discovery(self, pool) -> None:
+        """Run job discovery for all active campaigns via ARQ worker.
 
         This discovers new jobs from configured sources (LinkedIn, Greenhouse, etc.)
         and stores them for analysis.
@@ -302,24 +346,16 @@ class CronScheduler:
         config = job_state._config
 
         logger.info(
-            f"Starting job discovery with config: batch_size={config.get('batch_size')}, "
+            f"Enqueuing job discovery task with config: batch_size={config.get('batch_size')}, "
             f"sources={config.get('sources')}"
         )
 
-        # TODO: Implement actual job discovery logic
-        # This would:
-        # 1. Get all active search campaigns
-        # 2. For each campaign, search configured job sources
-        # 3. Deduplicate against existing discovered jobs
-        # 4. Store new jobs with status=discovered
+        # Enqueue the actual ARQ task
+        job = await pool.enqueue_job("run_scheduled_discovery")
+        logger.info(f"Job discovery task enqueued: {job.job_id}")
 
-        # Placeholder implementation
-        await asyncio.sleep(1)  # Simulate work
-
-        logger.info("Job discovery completed")
-
-    async def _run_job_analysis(self) -> None:
-        """Analyze discovered jobs for match scoring.
+    async def _run_job_analysis(self, pool) -> None:
+        """Analyze discovered jobs for match scoring via ARQ worker.
 
         This processes unanalyzed jobs and calculates match scores
         based on user profiles and campaign criteria.
@@ -328,27 +364,16 @@ class CronScheduler:
         config = job_state._config
 
         logger.info(
-            f"Starting job analysis with config: batch_size={config.get('batch_size')}, "
+            f"Enqueuing job analysis task with config: batch_size={config.get('batch_size')}, "
             f"min_match_score={config.get('min_match_score')}"
         )
 
-        # TODO: Implement actual job analysis logic
-        # This would:
-        # 1. Get batch of unanalyzed jobs (discovered but not scored)
-        # 2. For each job:
-        #    a. Extract requirements
-        #    b. Match against user profile
-        #    c. Calculate match score
-        #    d. Update job with score and reasoning
-        # 3. Filter jobs below minimum match score
+        # Enqueue the actual ARQ task
+        job = await pool.enqueue_job("run_scheduled_analysis")
+        logger.info(f"Job analysis task enqueued: {job.job_id}")
 
-        # Placeholder implementation
-        await asyncio.sleep(1)  # Simulate work
-
-        logger.info("Job analysis completed")
-
-    async def _run_application_queue(self) -> None:
-        """Process the application queue.
+    async def _run_application_queue(self, pool) -> None:
+        """Process the application queue via ARQ worker.
 
         This handles pending applications by generating resumes,
         preparing application materials, and tracking status.
@@ -357,23 +382,13 @@ class CronScheduler:
         config = job_state._config
 
         logger.info(
-            f"Processing application queue with config: batch_size={config.get('batch_size')}, "
+            f"Enqueuing application queue task with config: batch_size={config.get('batch_size')}, "
             f"delay={config.get('delay_between_applications_seconds')}s"
         )
 
-        # TODO: Implement actual application processing logic
-        # This would:
-        # 1. Get batch of queued applications
-        # 2. For each application:
-        #    a. Generate tailored resume
-        #    b. Generate cover letter (if required)
-        #    c. Update status to resume_generated
-        # 3. Add delay between applications to avoid rate limiting
-
-        # Placeholder implementation
-        await asyncio.sleep(1)  # Simulate work
-
-        logger.info("Application queue processing completed")
+        # Enqueue the actual ARQ task
+        job = await pool.enqueue_job("run_scheduled_queue_processing")
+        logger.info(f"Application queue task enqueued: {job.job_id}")
 
     # ============ Job Control Methods ============
 
