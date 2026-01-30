@@ -63,14 +63,14 @@ _execution_steps: dict[str, list[dict]] = {}
 _execution_logs: dict[str, list[dict]] = {}
 
 
-def create_execution(
+def create_execution_record(
     user_id: str,
     workflow_type: str,
     workflow_name: str | None = None,
     campaign_id: str | None = None,
     entity_id: str | None = None,
 ) -> dict:
-    """Create a new execution record.
+    """Create a new execution record in the in-memory store.
 
     This is called when a workflow is triggered to create a trackable execution.
     Returns the execution dict with the generated ID.

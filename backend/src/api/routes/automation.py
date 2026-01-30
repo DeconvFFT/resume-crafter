@@ -1087,7 +1087,7 @@ from src.models.schemas.execution import (
     CronJobTriggerResponse,
     CronJobType as SchemaCronJobType,
 )
-from src.api.routes.execution import create_execution, start_execution_simulation
+from src.api.routes.execution import create_execution_record, start_execution_simulation
 
 
 @router.get("/cron/jobs", response_model=CronJobListResponse, tags=["Cron Jobs"])
@@ -1244,7 +1244,7 @@ async def trigger_cron_job(
         )
 
     # Create an execution record for real-time tracking
-    execution = create_execution(
+    execution = create_execution_record(
         user_id=str(current_user.id),
         workflow_type=job_type.value,
         workflow_name=job_type.value.replace("_", " ").title(),
