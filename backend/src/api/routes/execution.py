@@ -459,8 +459,34 @@ async def list_executions(
     end = start + page_size
     items = filtered[start:end]
 
+    # Convert in-memory dict format to ExecutionResponse format
+    response_items = []
+    for ex in items:
+        response_items.append(ExecutionResponse(
+            id=ex["id"],
+            user_id=ex["user_id"],
+            workflow_type=WorkflowType(ex["workflow_type"]),
+            status=ExecutionStatus(ex["status"]),
+            campaign_id=ex.get("campaign_id"),
+            entity_id=ex.get("entity_id"),
+            entity_type=ex.get("entity_type"),
+            config=ex.get("config"),
+            progress=ex.get("progress", 0),
+            current_step=ex.get("current_step"),
+            total_steps=ex.get("total_steps", 0),
+            completed_steps=ex.get("completed_steps", 0),
+            started_at=datetime.fromisoformat(ex["started_at"]) if ex.get("started_at") else None,
+            completed_at=datetime.fromisoformat(ex["completed_at"]) if ex.get("completed_at") else None,
+            duration_ms=ex.get("duration_ms"),
+            result=ex.get("result"),
+            error_message=ex.get("error_message"),
+            scheduled_at=datetime.fromisoformat(ex["scheduled_at"]) if ex.get("scheduled_at") else None,
+            created_at=datetime.fromisoformat(ex["created_at"]),
+            updated_at=datetime.fromisoformat(ex["updated_at"]),
+        ))
+
     return ExecutionListResponse(
-        items=[ExecutionResponse(**ex) for ex in items],
+        items=response_items,
         total=total,
         page=page,
         page_size=page_size,
