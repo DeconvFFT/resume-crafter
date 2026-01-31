@@ -131,8 +131,9 @@ def create_execution_record(
         "workflow_name": workflow_name or workflow_type.replace("_", " ").title(),
         "status": "running",
         "progress": 0,
-        "current_step": 0,
+        "current_step": steps[0]["name"] if steps else None,  # Step name, not index
         "total_steps": len(steps),
+        "completed_steps": 0,
         "started_at": now,
         "completed_at": None,
         "duration_ms": None,
@@ -140,6 +141,9 @@ def create_execution_record(
         "error_message": None,
         "campaign_id": campaign_id,
         "entity_id": entity_id,
+        "entity_type": None,
+        "config": None,
+        "scheduled_at": None,
         "created_at": now,
         "updated_at": now,
     }
@@ -202,9 +206,11 @@ def update_execution_progress(
             step["error_message"] = error
 
     # Update overall execution progress
-    completed_steps = sum(1 for s in steps if s["status"] == "completed")
-    execution["progress"] = int((completed_steps / len(steps)) * 100) if steps else 0
-    execution["current_step"] = step_index
+    completed_count = sum(1 for s in steps if s["status"] == "completed")
+    execution["progress"] = int((completed_count / len(steps)) * 100) if steps else 0
+    execution["completed_steps"] = completed_count
+    # Set current_step to the step name, not index
+    execution["current_step"] = steps[step_index]["name"] if step_index < len(steps) else None
     execution["updated_at"] = now
 
     # Add log entry
